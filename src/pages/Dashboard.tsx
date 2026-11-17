@@ -2,11 +2,13 @@
 type DashboardProps = {
   nombreUsuario: string;
   abrirCorrespondencia: () => void;
+  rol: 'directora' | 'secretaria' | 'docente';
 };
 
 export default function Dashboard({
   nombreUsuario,
   abrirCorrespondencia,
+  rol,
 }: DashboardProps) {
   const indicadores = [
     {
@@ -36,6 +38,12 @@ export default function Dashboard({
         </p>
       </div>
 
+      {rol === 'docente' ? (
+        <div className="sgc-aviso">
+          <h3>Panel docente</h3>
+          <p>El registro de asistencia con fotografía estará disponible en el próximo bloque.</p>
+        </div>
+      ) : <>
       <h3>Resumen de Correspondencia</h3>
 
       <div className="sgc-indicadores">
@@ -81,6 +89,7 @@ export default function Dashboard({
           utilizados únicamente para visualizar el diseño.
         </p>
       </div>
+      </>}
     </section>
   );
 }

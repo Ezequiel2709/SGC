@@ -10,6 +10,7 @@ import Sidebar, {
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Correspondencia from './pages/Correspondencia';
+import PlantelDocente from './pages/PlantelDocente';
 import './styles/dashboard.css';
 
 function App() {
@@ -91,6 +92,7 @@ function App() {
         <Sidebar
           moduloActivo={moduloActivo}
           cambiarModulo={setModuloActivo}
+          rol={usuario.rol}
         />
 
         <div className="sgc-contenido-principal">
@@ -109,11 +111,16 @@ function App() {
                 abrirCorrespondencia={() =>
                   setModuloActivo('correspondencia')
                 }
+                rol={usuario.rol}
               />
             )}
 
-            {moduloActivo === 'correspondencia' && token && (
+            {moduloActivo === 'correspondencia' && token && usuario.rol !== 'docente' && (
               <Correspondencia token={token} />
+            )}
+
+            {moduloActivo === 'asistencia' && token && usuario.rol === 'directora' && (
+              <PlantelDocente token={token} />
             )}
 
           </main>

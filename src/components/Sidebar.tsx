@@ -9,11 +9,13 @@ type Modulo =
 type SidebarProps = {
   moduloActivo: Modulo;
   cambiarModulo: (modulo: Modulo) => void;
+  rol: 'directora' | 'secretaria' | 'docente';
 };
 
 export default function Sidebar({
   moduloActivo,
   cambiarModulo,
+  rol,
 }: SidebarProps) {
   const opciones: {
     id: Modulo;
@@ -31,13 +33,13 @@ export default function Sidebar({
       id: 'correspondencia',
       nombre: 'Correspondencia',
       icono: '📁',
-      disponible: true,
+      disponible: rol !== 'docente',
     },
     {
       id: 'asistencia',
       nombre: 'Plantel Docente y Asistencia',
       icono: '📅',
-      disponible: false,
+      disponible: rol === 'directora',
     },
     {
       id: 'titulaciones',
@@ -61,7 +63,11 @@ export default function Sidebar({
       </div>
 
       <nav className="sgc-sidebar-menu" aria-label="Menú principal">
-        {opciones.map((opcion) => (
+        {opciones.filter((opcion) => {
+          if (rol === 'docente') return opcion.id === 'inicio' || opcion.id === 'asistencia';
+          if (rol === 'secretaria') return opcion.id === 'inicio' || opcion.id === 'correspondencia';
+          return true;
+        }).map((opcion) => (
           <button
             key={opcion.id}
             type="button"
