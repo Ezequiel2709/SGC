@@ -170,13 +170,13 @@ router.post('/', async (req, res) => {
     return;
   }
 
-  if (tipo === 'expedida' && gestion == null) {
-    res.status(400).json({
-      mensaje:
-        'La gestión es obligatoria para documentos expedidos.',
-    });
-    return;
-  }
+  if (gestion == null) {
+  res.status(400).json({
+    mensaje:
+      'La gestión es obligatoria para todos los documentos.',
+  });
+  return;
+}
 
   const usuarioId = res.locals.usuario?.id;
 
@@ -295,6 +295,7 @@ router.post('/', async (req, res) => {
     cliente?.release();
   }
 });
+
 
 // ========================================
 // 3. ACTUALIZAR ESTADO
@@ -1390,6 +1391,9 @@ router.get('/:id/archivo', async (req, res) => {
     });
   }
 });
+
+
+
 
 
 
