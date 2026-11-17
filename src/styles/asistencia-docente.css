@@ -45,3 +45,6 @@
   .docente-cabecera{align-items:flex-start}
   .docente-registro{align-items:flex-start;flex-direction:column}
 }
+.docente-solicitud-form select,.docente-solicitud-form textarea{width:100%;padding:11px;border:1px solid #abc2d6;border-radius:9px;background:#fff;color:#1c3852;font:inherit}
+.docente-solicitud-form textarea{resize:vertical}
+.docente-solicitud-estado{align-items:flex-start}

@@ -12,6 +12,7 @@ export type ClaseDocente = {
   hora_fin: string;
   asistencia_id: string | null;
   estado_asistencia: string | null;
+  origen_asistencia: string | null;
   hoy: boolean;
   puede_marcar: boolean;
 };
@@ -27,6 +28,7 @@ export type AsistenciaDocente = {
   hora_registro: string;
   materia: string;
   estado: string;
+  origen_registro: string;
   aula: string | null;
   tiene_foto: boolean;
 };
@@ -74,4 +76,41 @@ export async function obtenerMiFoto(token: string, asistenciaId: string): Promis
     throw new Error('El servidor no devolvió una imagen válida.');
   }
   return URL.createObjectURL(foto);
+}
+
+export type MiSolicitud = {
+  id: string;
+  tipo: 'correccion' | 'justificacion';
+  motivo: string;
+  descripcion: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  fecha_clase: string;
+  fecha_solicitud: string;
+  fecha_revision: string | null;
+  observacion_revision: string | null;
+  materia: string;
+  hora_inicio: string;
+};
+
+export async function obtenerMisSolicitudes(token: string): Promise<MiSolicitud[]> {
+  const res = await fetch(`${API_URL}/api/docente/mis-solicitudes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(await mensajeError(res));
+  const r = await res.json() as { solicitudes: MiSolicitud[] };
+  return r.solicitudes;
+}
+
+export async function enviarMiSolicitud(token: string, datos: {
+  horario_id: string; fecha: string; tipo: 'correccion' | 'justificacion';
+  motivo: string; descripcion: string;
+}): Promise<string> {
+  const res = await fetch(`${API_URL}/api/docente/solicitudes`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+  if (!res.ok) throw new Error(await mensajeError(res));
+  const r = await res.json() as { mensaje: string };
+  return r.mensaje;
 }

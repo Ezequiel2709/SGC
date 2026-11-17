@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   marcarMiEntrada, obtenerMiFoto, obtenerMisAsistencias, obtenerMisClases,
+  obtenerMisSolicitudes, enviarMiSolicitud, type MiSolicitud,
   type AsistenciaDocente, type ClaseDocente, type MisClases,
 } from '../lib/asistencia';
 import '../styles/asistencia-docente.css';
@@ -12,6 +13,13 @@ const TAMANO_MAXIMO = 5 * 1024 * 1024;
 export default function MiAsistencia({ token, nombreDocente }: Props) {
   const [datos, setDatos] = useState<MisClases | null>(null);
   const [historial, setHistorial] = useState<AsistenciaDocente[]>([]);
+  const [solicitudes, setSolicitudes] = useState<MiSolicitud[]>([]);
+  const [claseSolicitud, setClaseSolicitud] = useState('');
+  const [fechaSolicitud, setFechaSolicitud] = useState('');
+  const [tipoSolicitud, setTipoSolicitud] = useState<'correccion' | 'justificacion'>('correccion');
+  const [motivoSolicitud, setMotivoSolicitud] = useState('');
+  const [descripcionSolicitud, setDescripcionSolicitud] = useState('');
+  const [enviandoSolicitud, setEnviandoSolicitud] = useState(false);
   const [foto, setFoto] = useState<File | null>(null);
   const [seleccion, setSeleccion] = useState<string>('');
   const [cargando, setCargando] = useState(true);
@@ -24,11 +32,12 @@ export default function MiAsistencia({ token, nombreDocente }: Props) {
     setCargando(true);
     setError('');
     try {
-      const [clases, asistencias] = await Promise.all([
-        obtenerMisClases(token), obtenerMisAsistencias(token),
+      const [clases, asistencias, nuevasSolicitudes] = await Promise.all([
+        obtenerMisClases(token), obtenerMisAsistencias(token), obtenerMisSolicitudes(token),
       ]);
       setDatos(clases);
       setHistorial(asistencias);
+      setSolicitudes(nuevasSolicitudes);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos consultar tus horarios.');
     } finally {
@@ -66,6 +75,26 @@ export default function MiAsistencia({ token, nombreDocente }: Props) {
     } finally { setGuardando(false); }
   }
 
+  async function solicitarRevision(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (enviandoSolicitud || !datos) return;
+    if (!claseSolicitud || !fechaSolicitud || !motivoSolicitud || descripcionSolicitud.trim().length < 10) {
+      setError('Completa la clase, fecha, motivo y una descripción de al menos 10 caracteres.');
+      return;
+    }
+    setEnviandoSolicitud(true); setMensaje(''); setError('');
+    try {
+      const resultado = await enviarMiSolicitud(token, {
+        horario_id: claseSolicitud, fecha: fechaSolicitud,
+        tipo: tipoSolicitud, motivo: motivoSolicitud, descripcion: descripcionSolicitud,
+      });
+      setMensaje(resultado);
+      setClaseSolicitud(''); setFechaSolicitud(''); setMotivoSolicitud(''); setDescripcionSolicitud('');
+      await cargar();
+    } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud.'); }
+    finally { setEnviandoSolicitud(false); }
+  }
+
   async function verFoto(registro: AsistenciaDocente) {
     setError('');
     try {
@@ -77,7 +106,10 @@ export default function MiAsistencia({ token, nombreDocente }: Props) {
   }
 
   function claseCard(c: ClaseDocente, habilitarAccion: boolean) {
-    const estado = c.asistencia_id ? 'Entrada registrada' : c.puede_marcar ? 'Disponible para marcar' : 'Fuera de la ventana de marcado';
+    const estado = c.asistencia_id
+      ? c.origen_asistencia === 'justificacion' ? 'Ausencia justificada'
+        : c.origen_asistencia === 'correccion' ? 'Corrección autorizada' : 'Entrada registrada'
+      : c.puede_marcar ? 'Disponible para marcar' : 'Fuera de la ventana de marcado';
     return (
       <article key={c.horario_id} className="docente-clase">
         <div className="docente-fila">
@@ -122,12 +154,71 @@ export default function MiAsistencia({ token, nombreDocente }: Props) {
           </div>
         </form>}
 
+        <h3>Solicitud de corrección o justificación</h3>
+        <div className="docente-regla">
+          <strong>¿No pudiste marcar o no impartiste la clase?</strong>
+          <p>Solicita una <strong>corrección</strong> si impartiste la clase pero venció la ventana de marcado. Usa una <strong>justificación</strong> si no pudiste impartirla. Dirección evaluará la solicitud y dejará constancia de su decisión.</p>
+          <p>Solo se aceptan clases de hoy (después del horario indicado) o de los últimos 45 días. No constituye una asistencia automática.</p>
+        </div>
+        <form className="docente-form docente-solicitud-form" onSubmit={solicitarRevision}>
+          <label>Tipo de solicitud
+            <select value={tipoSolicitud} onChange={e => { setTipoSolicitud(e.target.value as 'correccion' | 'justificacion'); setMotivoSolicitud(''); }}>
+              <option value="correccion">Corrección: sí impartí clase, pero no marqué a tiempo</option>
+              <option value="justificacion">Justificación: no impartí clase</option>
+            </select>
+          </label>
+          <label>Materia y horario
+            <select value={claseSolicitud} onChange={e => setClaseSolicitud(e.target.value)} required>
+              <option value="">Selecciona una clase</option>
+              {semana.map(c => <option key={c.horario_id} value={c.horario_id}>{c.materia} · {DIAS[c.dia_semana]} · {c.hora_inicio}</option>)}
+            </select>
+          </label>
+          <label>Fecha de esa clase
+            <input type="date" value={fechaSolicitud} max={datos.fecha}
+              min={new Date(Date.parse(`${datos.fecha}T12:00:00Z`) - 45 * 86400000).toISOString().slice(0, 10)}
+              onChange={e => setFechaSolicitud(e.target.value)} required />
+          </label>
+          <label>Motivo
+            <select value={motivoSolicitud} onChange={e => setMotivoSolicitud(e.target.value)} required>
+              <option value="">Selecciona un motivo</option>
+              {tipoSolicitud === 'correccion' ? <>
+                <option value="Olvidé realizar el marcado">Olvidé realizar el marcado</option>
+                <option value="Problema técnico">Problema técnico</option>
+                <option value="Otro motivo">Otro motivo</option>
+              </> : <>
+                <option value="Enfermedad">Enfermedad</option>
+                <option value="Permiso autorizado">Permiso autorizado</option>
+                <option value="Actividad suspendida">Actividad suspendida</option>
+                <option value="Otro motivo">Otro motivo</option>
+              </>}
+            </select>
+          </label>
+          <label>Explica lo ocurrido (mínimo 10 caracteres)
+            <textarea rows={3} minLength={10} maxLength={1200} value={descripcionSolicitud}
+              onChange={e => setDescripcionSolicitud(e.target.value)} required
+              placeholder="Describe la situación para que la directora pueda evaluarla" />
+          </label>
+          <button className="docente-boton" disabled={enviandoSolicitud || semana.length === 0}>
+            {enviandoSolicitud ? 'Enviando…' : 'Enviar a Dirección'}
+          </button>
+        </form>
+        <h3>Mis solicitudes y respuestas de Dirección</h3>
+        {solicitudes.length ? <div className="docente-historial">
+          {solicitudes.map(s => <div className="docente-registro docente-solicitud-estado" key={s.id}>
+            <div><strong>{s.materia} · {s.fecha_clase}</strong>
+              <p>{s.tipo === 'correccion' ? 'Corrección' : 'Justificación'} · {s.motivo}</p>
+              <p>Estado: <strong>{s.estado}</strong> · enviada el {s.fecha_solicitud}</p>
+              {s.observacion_revision && <p>Respuesta: {s.observacion_revision}</p>}
+            </div>
+          </div>)}
+        </div> : <p className="docente-vacio">Todavía no has enviado solicitudes.</p>}
+
         <h3>Mi horario semanal</h3>
         {semana.length ? <div className="docente-tarjetas">{semana.map(c => claseCard(c, false))}</div>
           : <p className="docente-vacio">Todavía no tienes materias y horarios activos para la gestión actual. Comunícate con Dirección de Carrera.</p>}
         <h3>Mis últimas asistencias</h3>
         {historial.length ? <div className="docente-historial">{historial.map(a => <div className="docente-registro" key={a.id}>
-          <div><strong>{a.materia}</strong><p>{a.fecha} · {a.hora_registro} · {a.estado}</p></div>
+          <div><strong>{a.materia}</strong><p>{a.fecha} · {a.estado} · {a.origen_registro === 'normal' ? `Marcado a las ${a.hora_registro}` : a.origen_registro === 'correccion' ? 'Corrección autorizada por Dirección' : 'Justificación autorizada por Dirección'}</p></div>
           {a.tiene_foto && <button type="button" className="docente-boton secundario" onClick={() => void verFoto(a)}>Ver foto</button>}
         </div>)}</div>
           : <p className="docente-vacio">Aún no hay registros de asistencia.</p>}
@@ -136,7 +227,7 @@ export default function MiAsistencia({ token, nombreDocente }: Props) {
       {vistaFoto && <div className="docente-visor" role="dialog" aria-modal="true" aria-label="Evidencia fotográfica">
         <div className="docente-visor-contenido"><button type="button" className="docente-boton secundario" onClick={() => setVistaFoto(null)}>Cerrar fotografía</button><img src={vistaFoto} alt="Evidencia de tu asistencia" /></div>
       </div>}
-      <p className="docente-nota">El sistema utiliza la hora del servidor para validar el registro. Si venció el horario, podrás solicitar una corrección cuando implementemos el siguiente bloque.</p>
+      <p className="docente-nota">El sistema utiliza la hora del servidor. Las solicitudes son revisadas por Dirección; una autorización queda identificada en el historial como registro administrativo.</p>
     </section>
   );
 }

@@ -3,6 +3,7 @@ import {
   obtenerPlantel, crearDocente, crearMateria, crearAsignacion, crearHorario,
   type ResumenPlantel,
 } from '../lib/plantel';
+import ControlAsistencia from './ControlAsistencia';
 
 type Props = { token: string };
 const dias = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
@@ -112,8 +113,8 @@ export default function PlantelDocente({ token }: Props) {
   return (
     <section className="sgc-correspondencia" style={{maxWidth:1200}}>
       <div className="sgc-pagina-encabezado">
-        <h2>Plantel Docente y horarios</h2>
-        <p>Administración académica. La asistencia con fotografía será el siguiente bloque.</p>
+        <h2>Plantel Docente y Asistencia</h2>
+        <p>Administración académica, supervisión de asistencias y solicitudes del plantel.</p>
       </div>
       <div className="sgc-aviso">
         <strong>Acceso administrativo: Directora</strong>
@@ -122,6 +123,8 @@ export default function PlantelDocente({ token }: Props) {
       {error && <div className="sgc-aviso" role="alert" style={{borderColor:'#b91c1c',color:'#b91c1c'}}>{error}</div>}
       {mensaje && <div className="sgc-aviso" role="status" style={{borderColor:'#166534'}}>{mensaje}</div>}
       {cargando && <p role="status">Actualizando información desde PostgreSQL...</p>}
+
+      <ControlAsistencia token={token} docentes={datos.docentes} />
 
       <form style={tarjeta} onSubmit={guardarDocente}>
         <h3>1. Registrar docente y crear su cuenta</h3>

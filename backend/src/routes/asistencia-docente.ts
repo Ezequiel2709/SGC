@@ -96,7 +96,8 @@ router.get('/mis-clases', async (_req, res) => {
         a.gestion, h.dia_semana, h.aula,
         TO_CHAR(h.hora_inicio, 'HH24:MI') AS hora_inicio,
         TO_CHAR(h.hora_fin, 'HH24:MI') AS hora_fin,
-        r.id::text AS asistencia_id, r.estado AS estado_asistencia
+        r.id::text AS asistencia_id, r.estado AS estado_asistencia,
+        r.origen_registro AS origen_asistencia
       ${horarioDocente}
       LEFT JOIN public.asistencias r ON r.horario_id = h.id AND r.fecha = $3::date
       WHERE ${filtroPropio} AND a.gestion = $2
@@ -121,7 +122,7 @@ router.get('/mis-asistencias', async (_req, res) => {
     const r = await pool.query(`
       SELECT s.id::text, TO_CHAR(s.fecha, 'YYYY-MM-DD') AS fecha,
         TO_CHAR(s.hora_registro, 'HH24:MI') AS hora_registro,
-        s.estado, (s.foto_ruta IS NOT NULL) AS tiene_foto, m.nombre AS materia, h.aula
+        s.estado, s.origen_registro, (s.foto_ruta IS NOT NULL) AS tiene_foto, m.nombre AS materia, h.aula
       FROM public.asistencias s
       JOIN public.horarios_clase h ON h.id = s.horario_id
       JOIN public.asignaciones_docentes a ON a.id = h.asignacion_id
