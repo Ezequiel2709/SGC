@@ -9,8 +9,7 @@ import Sidebar, {
 
 import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
-import Correspondencia from './pages/Corresponder';
-
+import Correspondencia from './pages/Correspondencia';
 import './styles/dashboard.css';
 
 function App() {
@@ -21,6 +20,7 @@ function App() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -49,6 +49,7 @@ function App() {
         password
       );
 
+      setToken(resultado.token);
       setUsuario(resultado.usuario);
       setPassword('');
       setModuloActivo('inicio');
@@ -71,6 +72,7 @@ function App() {
   // ====================================
 
   function cerrarSesion() {
+    setToken(null);
     setUsuario(null);
     setCorreo('');
     setPassword('');
@@ -110,8 +112,8 @@ function App() {
               />
             )}
 
-            {moduloActivo === 'correspondencia' && (
-              <Correspondencia />
+            {moduloActivo === 'correspondencia' && token && (
+              <Correspondencia token={token} />
             )}
 
           </main>
