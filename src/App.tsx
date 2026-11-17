@@ -11,6 +11,7 @@ import Header from './components/Header';
 import Dashboard from './pages/Dashboard';
 import Correspondencia from './pages/Correspondencia';
 import PlantelDocente from './pages/PlantelDocente';
+import MiAsistencia from './pages/MiAsistencia';
 import './styles/dashboard.css';
 
 function App() {
@@ -53,7 +54,7 @@ function App() {
       setToken(resultado.token);
       setUsuario(resultado.usuario);
       setPassword('');
-      setModuloActivo('inicio');
+      setModuloActivo(resultado.usuario.rol === 'docente' ? 'asistencia' : 'inicio');
       setMensaje('');
 
     } catch (error) {
@@ -87,7 +88,7 @@ function App() {
 
   if (usuario) {
     return (
-      <div className="sgc-layout">
+      <div className={usuario.rol === 'docente' ? 'sgc-layout sgc-layout-docente' : 'sgc-layout'}>
 
         <Sidebar
           moduloActivo={moduloActivo}
@@ -121,6 +122,10 @@ function App() {
 
             {moduloActivo === 'asistencia' && token && usuario.rol === 'directora' && (
               <PlantelDocente token={token} />
+            )}
+
+            {moduloActivo === 'asistencia' && token && usuario.rol === 'docente' && (
+              <MiAsistencia token={token} nombreDocente={usuario.nombre_completo} />
             )}
 
           </main>

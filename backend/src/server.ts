@@ -4,6 +4,7 @@ import { pool } from './db.js';
 import authRouter from './routes/auth.js';
 import correspondenciaRouter from './routes/correspondencia.js';
 import plantelRouter from './routes/plantel.js';
+import asistenciaDocenteRouter from './routes/asistencia-docente.js';
 import { autenticar } from './middlewares/auth.js';
 import { permitirRoles } from './middlewares/roles.js';
 
@@ -21,6 +22,9 @@ app.use('/api/correspondencia', autenticar,
 
 // Administración del plantel: solo Directora. El panel del docente vendrá después.
 app.use('/api/plantel', autenticar, permitirRoles('directora'), plantelRouter);
+
+// Portal de asistencia: solamente la cuenta del docente puede marcar sus clases.
+app.use('/api/docente', autenticar, permitirRoles('docente'), asistenciaDocenteRouter);
 
 app.get('/api/privado-test', autenticar, permitirRoles('directora'), (_req, res) => {
   res.json({ mensaje: 'Acceso autorizado.', rol: res.locals.usuario.rol });

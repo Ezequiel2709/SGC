@@ -1,0 +1,47 @@
+.docente-panel{max-width:920px;margin:auto;color:#18324a}
+.docente-cabecera{display:flex;gap:16px;justify-content:space-between;align-items:center;margin-bottom:22px}
+.docente-cabecera small{color:#55708c;font-size:11px;font-weight:700;letter-spacing:1px}
+.docente-cabecera h2{font-size:clamp(24px,4vw,33px);margin:5px 0 4px}
+.docente-cabecera p,.docente-clase p,.docente-registro p{margin:4px 0;color:#586d80;font-size:14px}
+.docente-panel h3{margin:26px 0 13px;font-size:18px}
+.docente-regla,.docente-form{padding:18px;background:#e8f0f9;border:1px solid #c9d9eb;border-radius:14px}
+.docente-regla p{font-size:14px;line-height:1.55;margin:9px 0 0}
+.docente-fila{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.docente-tarjetas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.docente-clase{background:white;padding:16px;border-radius:14px;border:1px solid #d5e1ec;box-shadow:0 2px 8px rgba(11,42,65,.04)}
+.docente-clase strong{font-size:16px}
+.docente-clase p{margin:10px 0 0}
+.docente-etiqueta{font-size:11px;border-radius:18px;padding:6px 10px;background:#e8edf2;color:#40566b;font-weight:700}
+.docente-etiqueta.habilitado{background:#d3f3df;color:#18623b}
+.docente-etiqueta.completado{background:#dcecfb;color:#174f87}
+.docente-boton{display:inline-block;background:#195f9b;color:white;border:1px solid #195f9b;border-radius:9px;padding:11px 14px;font-weight:700;margin-top:11px}
+.docente-boton.secundario{background:white;border-color:#9eb8d0;color:#174c77}
+.docente-boton:disabled{opacity:.55;cursor:not-allowed}
+.docente-form{background:#fff;margin-top:18px;display:grid;gap:12px}
+.docente-form h3{margin:0}
+.docente-form p{margin:0;line-height:1.5;font-size:14px}
+.docente-form label{font-weight:700;font-size:14px}
+.docente-form input{max-width:100%;padding:12px;border:1px solid #abc2d6;border-radius:9px;background:white}
+.docente-archivo{color:#174f87}
+.docente-registro{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid #d5e1ec;border-radius:11px;background:white;padding:12px 16px;margin-bottom:9px}
+.docente-registro .docente-boton{margin:0;flex-shrink:0}
+.docente-vacio{background:#f0f4f8;border-radius:12px;padding:18px;color:#576d80}
+.docente-alerta{padding:14px;border-radius:10px;margin:12px 0}
+.docente-alerta.error{background:#fff0f1;color:#9d1b2a}
+.docente-alerta.exito{background:#e2f8e8;color:#13582e}
+.docente-visor{position:fixed;inset:0;background:rgba(6,19,37,.85);display:flex;align-items:center;justify-content:center;z-index:9999;padding:12px}
+.docente-visor-contenido{background:#fff;border-radius:14px;padding:16px;max-width:min(96vw,700px);max-height:95vh;overflow:auto;display:grid;gap:12px}
+.docente-visor img{max-width:100%;max-height:75vh;object-fit:contain}
+.docente-nota{font-size:12px;color:#728394;margin:28px 0}
+@media(max-width:760px){
+  .sgc-layout-docente{display:block}
+  .sgc-layout-docente .sgc-sidebar{width:100%;min-height:auto}
+  .sgc-layout-docente .sgc-sidebar-logo{padding:12px 16px}
+  .sgc-layout-docente .sgc-sidebar-logo h2{font-size:23px}
+  .sgc-layout-docente .sgc-sidebar-menu{display:flex;flex-direction:row;padding:8px;gap:5px}
+  .sgc-layout-docente .sgc-sidebar-menu button{padding:10px;font-size:12px}
+  .sgc-layout-docente .sgc-sidebar-footer{display:none}
+  .sgc-layout-docente .sgc-contenido{padding:14px}
+  .docente-cabecera{align-items:flex-start}
+  .docente-registro{align-items:flex-start;flex-direction:column}
+}

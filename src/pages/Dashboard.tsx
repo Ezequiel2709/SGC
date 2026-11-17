@@ -41,7 +41,7 @@ export default function Dashboard({
       {rol === 'docente' ? (
         <div className="sgc-aviso">
           <h3>Panel docente</h3>
-          <p>El registro de asistencia con fotografía estará disponible en el próximo bloque.</p>
+          <p>Abre «Mi asistencia» en el menú para consultar tu horario y registrar tu entrada con fotografía.</p>
         </div>
       ) : <>
       <h3>Resumen de Correspondencia</h3>
