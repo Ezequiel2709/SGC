@@ -35,6 +35,8 @@ export type Horario = {
   hora_fin: string;
   aula: string | null;
   activo: boolean;
+  vigencia_desde: string;
+  vigencia_hasta: string | null;
 };
 export type ResumenPlantel = {
   docentes: Docente[];
@@ -84,4 +86,16 @@ export function crearAsignacion(token: string, datos: {docente_id: string; mater
 }
 export function crearHorario(token: string, datos: {asignacion_id: string; dia_semana: number; hora_inicio: string; hora_fin: string; aula?: string}): Promise<unknown> {
   return peticion(token, '/horarios', datos);
+}
+
+export type CambioHorario = {
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  aula: string;
+  vigencia_desde: string;
+  motivo: string;
+};
+export function reprogramarHorario(token: string, horarioId: string, datos: CambioHorario): Promise<unknown> {
+  return peticion(token, `/horarios/${encodeURIComponent(horarioId)}/reprogramar`, datos);
 }

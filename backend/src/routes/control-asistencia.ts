@@ -77,7 +77,9 @@ solicitudesDocenteRouter.post('/solicitudes', async (req, res) => {
       WHERE h.id = $1 AND d.perfil_id = $2 AND p.rol = 'docente'
         AND p.activo = TRUE AND d.activo = TRUE AND a.activo = TRUE
         AND h.activo = TRUE AND m.activo = TRUE
-        AND a.gestion = EXTRACT(YEAR FROM $3::date)::integer`, [horario_id, usuarioId, fecha]);
+        AND a.gestion = EXTRACT(YEAR FROM $3::date)::integer
+        AND h.vigencia_desde <= $3::date
+        AND (h.vigencia_hasta IS NULL OR h.vigencia_hasta >= $3::date)`, [horario_id, usuarioId, fecha]);
     const clase = horario.rows[0];
     if (!clase || Number(clase.dia_semana) !== diaIso(fecha)) {
       res.status(403).json({ mensaje: 'Esa clase no pertenece a tu cuenta o no corresponde al día seleccionado.' }); return;

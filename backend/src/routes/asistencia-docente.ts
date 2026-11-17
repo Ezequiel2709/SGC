@@ -101,6 +101,8 @@ router.get('/mis-clases', async (_req, res) => {
       ${horarioDocente}
       LEFT JOIN public.asistencias r ON r.horario_id = h.id AND r.fecha = $3::date
       WHERE ${filtroPropio} AND a.gestion = $2
+        AND h.vigencia_desde <= $3::date
+        AND (h.vigencia_hasta IS NULL OR h.vigencia_hasta >= $3::date)
       ORDER BY h.dia_semana, h.hora_inicio, m.nombre
     `, [usuarioId, ahora.anio, ahora.fecha]);
     const clases = consulta.rows.map(registro => ({
@@ -194,7 +196,9 @@ router.post('/marcar/:horarioId', (req, res) => {
         SELECT h.id, h.dia_semana, TO_CHAR(h.hora_inicio, 'HH24:MI') AS hora_inicio
         ${horarioDocente}
         WHERE ${filtroPropio} AND h.id = $2 AND a.gestion = $3
-      `, [usuarioId, id, ahora.anio]);
+          AND h.vigencia_desde <= $4::date
+          AND (h.vigencia_hasta IS NULL OR h.vigencia_hasta >= $4::date)
+      `, [usuarioId, id, ahora.anio, ahora.fecha]);
       const horario = consulta.rows[0];
       if (!horario) {
         res.status(403).json({ mensaje: 'El horario no pertenece a tu cuenta o está inactivo.' });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
-  obtenerPlantel, crearDocente, crearMateria, crearAsignacion, crearHorario,
+  obtenerPlantel, crearDocente, crearMateria, crearAsignacion, crearHorario, reprogramarHorario,
   type ResumenPlantel,
 } from '../lib/plantel';
 import ControlAsistencia from './ControlAsistencia';
@@ -43,6 +43,13 @@ export default function PlantelDocente({ token }: Props) {
   const [inicio, setInicio] = useState('08:00');
   const [fin, setFin] = useState('10:00');
   const [aula, setAula] = useState('');
+  const [editarId, setEditarId] = useState('');
+  const [nuevoDia, setNuevoDia] = useState(1);
+  const [nuevoInicio, setNuevoInicio] = useState('08:00');
+  const [nuevoFin, setNuevoFin] = useState('10:00');
+  const [nuevaAula, setNuevaAula] = useState('');
+  const [vigencia, setVigencia] = useState('');
+  const [motivoCambio, setMotivoCambio] = useState('');
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -103,6 +110,30 @@ export default function PlantelDocente({ token }: Props) {
       hora_inicio:inicio,hora_fin:fin,aula,
     }), 'Horario registrado correctamente.', () => {
       setAula('');setAsignacionId('');
+    });
+  }
+
+  function editarHorario(id: string) {
+    const horario = datos.horarios.find(h => h.id === id);
+    if (!horario) return;
+    setEditarId(id);
+    setNuevoDia(horario.dia_semana);
+    setNuevoInicio(horario.hora_inicio);
+    setNuevoFin(horario.hora_fin);
+    setNuevaAula(horario.aula ?? '');
+    setVigencia('');
+    setMotivoCambio('');
+    setError(''); setMensaje('');
+    document.getElementById('sgc-edicion-horario')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function guardarCambioHorario(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editarId) return;
+    void ejecutar(() => reprogramarHorario(token, editarId, {
+      dia_semana:nuevoDia, hora_inicio:nuevoInicio, hora_fin:nuevoFin,
+      aula:nuevaAula, vigencia_desde:vigencia, motivo:motivoCambio,
+    }), 'Cambio de horario programado, sin alterar el historial anterior.', () => {
+      setEditarId('');setVigencia('');setMotivoCambio('');
     });
   }
 
@@ -207,15 +238,39 @@ export default function PlantelDocente({ token }: Props) {
         <div><button className="sgc-btn-principal" disabled={ocupado}>Guardar horario</button></div>
       </form>
       <div style={{overflowX:'auto',marginBottom:24}}>
-        <h3>Horarios ({datos.horarios.length})</h3>
-        <table className="sgc-tabla"><thead><tr><th>Docente</th><th>Materia</th><th>Día</th><th>Horario</th><th>Aula</th></tr></thead>
+        <h3>Horarios y vigencias ({datos.horarios.length})</h3>
+        <p>Los cambios se programan desde una fecha futura. Las asistencias y solicitudes anteriores mantienen el horario original.</p>
+        <table className="sgc-tabla"><thead><tr><th>Docente</th><th>Materia</th><th>Día</th><th>Horario</th><th>Aula</th><th>Vigente desde</th><th>Vigente hasta</th><th>Acción</th></tr></thead>
           <tbody>{datos.horarios.map(h=>{
             const a=datos.asignaciones.find(x=>x.id===h.asignacion_id);
             return <tr key={h.id}><td>{a?.docente_nombre ?? '—'}</td><td>{a?.materia_nombre ?? '—'}</td>
-              <td>{dias[h.dia_semana] ?? h.dia_semana}</td><td>{h.hora_inicio}–{h.hora_fin}</td><td>{h.aula||'—'}</td></tr>;
-          })}{!datos.horarios.length && <tr><td colSpan={5}>Todavía no hay horarios.</td></tr>}</tbody>
+              <td>{dias[h.dia_semana] ?? h.dia_semana}</td><td>{h.hora_inicio}–{h.hora_fin}</td><td>{h.aula||'—'}</td>
+              <td>{h.vigencia_desde}</td><td>{h.vigencia_hasta ?? 'Sin término'}</td>
+              <td><button type="button" disabled={ocupado || !h.activo || (!!h.vigencia_hasta && h.vigencia_hasta <= new Date().toISOString().slice(0,10))}
+                onClick={()=>editarHorario(h.id)}>Editar</button></td></tr>;
+          })}{!datos.horarios.length && <tr><td colSpan={8}>Todavía no hay horarios.</td></tr>}</tbody>
         </table>
       </div>
+
+      {editarId && <form id="sgc-edicion-horario" style={tarjeta} onSubmit={guardarCambioHorario}>
+        <h3>5. Programar cambio de horario</h3>
+        <p>Este cambio creará una nueva versión del horario. El registro anterior conservará las asistencias y fotos ya registradas.</p>
+        <div style={fila}>
+          <label style={campo}>Nuevo día *<select value={nuevoDia} onChange={e=>setNuevoDia(Number(e.target.value))}>
+            {dias.slice(1).map((nombre,i)=><option key={nombre} value={i+1}>{nombre}</option>)}
+          </select></label>
+          <label style={campo}>Hora de inicio *<input type="time" value={nuevoInicio} onChange={e=>setNuevoInicio(e.target.value)} required/></label>
+          <label style={campo}>Hora de fin *<input type="time" value={nuevoFin} onChange={e=>setNuevoFin(e.target.value)} required/></label>
+          <label style={campo}>Aula<input value={nuevaAula} onChange={e=>setNuevaAula(e.target.value)} maxLength={50}/></label>
+          <label style={campo}>Fecha de vigencia *<input type="date" value={vigencia} onChange={e=>setVigencia(e.target.value)} required/></label>
+          <label style={campo}>Motivo del cambio *<input value={motivoCambio} onChange={e=>setMotivoCambio(e.target.value)} minLength={1} maxLength={500} required placeholder="Ej. Cambio aprobado por Dirección"/></label>
+        </div>
+        <small>El cambio entra en vigor desde mañana o una fecha posterior. No aplica retroactivamente.</small>
+        <div style={fila}>
+          <button className="sgc-btn-principal" disabled={ocupado}>Guardar nuevo horario</button>
+          <button type="button" onClick={()=>setEditarId('')} disabled={ocupado}>Cancelar</button>
+        </div>
+      </form>}
     </section>
   );
 }

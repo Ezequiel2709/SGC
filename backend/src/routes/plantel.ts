@@ -20,6 +20,23 @@ function idValido(value: unknown): string | null {
   const s = String(value ?? '');
   return /^[1-9]\d{0,18}$/.test(s) ? s : null;
 }
+function fechaValida(value: unknown): string | null {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const d = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value ? value : null;
+}
+function hoyBolivia(): string {
+  const partes = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'America/La_Paz', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const v = (t: string) => partes.find(x => x.type === t)?.value ?? '';
+  return `${v('year')}-${v('month')}-${v('day')}`;
+}
+function diaSiguiente(fecha: string): string {
+  const fechaUtc = new Date(`${fecha}T12:00:00Z`);
+  fechaUtc.setUTCDate(fechaUtc.getUTCDate() + 1);
+  return fechaUtc.toISOString().slice(0, 10);
+}
 function horaValida(value: unknown): string | null {
   return typeof value === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : null;
 }
@@ -54,7 +71,9 @@ router.get('/resumen', async (_req, res) => {
                   ORDER BY a.gestion DESC, a.id DESC LIMIT 800`),
       pool.query(`SELECT h.id::text, h.asignacion_id::text, h.dia_semana,
                          TO_CHAR(h.hora_inicio,'HH24:MI') AS hora_inicio,
-                         TO_CHAR(h.hora_fin,'HH24:MI') AS hora_fin, h.aula, h.activo
+                         TO_CHAR(h.hora_fin,'HH24:MI') AS hora_fin, h.aula, h.activo,
+                         TO_CHAR(h.vigencia_desde,'YYYY-MM-DD') AS vigencia_desde,
+                         TO_CHAR(h.vigencia_hasta,'YYYY-MM-DD') AS vigencia_hasta
                   FROM public.horarios_clase h ORDER BY h.dia_semana, h.hora_inicio LIMIT 1200`),
     ]);
     res.json({ docentes: docentes.rows, materias: materias.rows,
@@ -150,11 +169,15 @@ router.post('/horarios', async (req, res) => {
       `SELECT a.id, a.docente_id, a.gestion FROM public.asignaciones_docentes a
        WHERE a.id=$1 AND a.activo=TRUE FOR UPDATE`, [id]);
     if (!asig.rowCount) {await cliente.query('ROLLBACK');res.status(400).json({mensaje:'La asignación no existe o está inactiva.'});return;}
+    // Serializa horarios de un docente/gestion incluso entre diferentes asignaciones.
+    await cliente.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2::text, 0))`,
+      [asig.rows[0].docente_id, asig.rows[0].gestion]);
     const choque=await cliente.query(
       `SELECT h.id FROM public.horarios_clase h
        JOIN public.asignaciones_docentes a ON a.id=h.asignacion_id
        WHERE a.docente_id=$1 AND a.gestion=$2 AND h.dia_semana=$3
          AND h.activo=TRUE AND a.activo=TRUE
+         AND (h.vigencia_hasta IS NULL OR h.vigencia_hasta >= (now() AT TIME ZONE 'America/La_Paz')::date)
          AND h.hora_inicio < $5::time AND h.hora_fin > $4::time LIMIT 1`,
       [asig.rows[0].docente_id,asig.rows[0].gestion,dia,inicio,fin]);
     if (choque.rowCount) {
@@ -162,14 +185,95 @@ router.post('/horarios', async (req, res) => {
       res.status(409).json({mensaje:'El docente ya tiene otra clase en ese horario.'});return;
     }
     const r=await cliente.query(
-      `INSERT INTO public.horarios_clase (asignacion_id,dia_semana,hora_inicio,hora_fin,aula)
-       VALUES ($1,$2,$3,$4,$5) RETURNING id::text`, [id,dia,inicio,fin,sala]);
+      `INSERT INTO public.horarios_clase (asignacion_id,dia_semana,hora_inicio,hora_fin,aula,vigencia_desde)
+       VALUES ($1,$2,$3,$4,$5,(now() AT TIME ZONE 'America/La_Paz')::date) RETURNING id::text`, [id,dia,inicio,fin,sala]);
     await cliente.query('COMMIT');
     res.status(201).json({ mensaje:'Horario registrado.',id:r.rows[0].id });
   } catch(error) {
     await cliente.query('ROLLBACK').catch(()=>undefined);
     const e=errorDB(error);res.status(e.status).json({mensaje:e.mensaje});
   } finally {cliente.release();}
+});
+
+
+// Directora: programar un cambio de horario SIN editar el registro original.
+// Al pasar la fecha de vigencia, las consultas docentes usan la nueva versión.
+router.post('/horarios/:id/reprogramar', async (req, res) => {
+  const horarioId = idValido(req.params.id);
+  const { dia_semana, hora_inicio, hora_fin, aula, vigencia_desde, motivo } = req.body ?? {};
+  const dia = entero(dia_semana, 1, 7);
+  const inicio = horaValida(hora_inicio), fin = horaValida(hora_fin);
+  const sala = opcional(aula, 50);
+  const fecha = fechaValida(vigencia_desde);
+  const razon = texto(motivo, 500);
+  const manana = diaSiguiente(hoyBolivia());
+  if (!horarioId || dia === null || !inicio || !fin || inicio >= fin || !fecha || fecha < manana ||
+      !razon || (aula != null && aula !== '' && !sala)) {
+    res.status(400).json({ mensaje: 'Indica día, horas correctas, motivo y fecha de vigencia desde mañana en adelante.' });
+    return;
+  }
+  const cliente = await pool.connect().catch(() => null);
+  if (!cliente) { res.status(500).json({ mensaje: 'No se pudo conectar a PostgreSQL.' }); return; }
+  try {
+    await cliente.query('BEGIN');
+    const anteriorR = await cliente.query(`
+      SELECT h.id, h.asignacion_id, h.dia_semana, h.hora_inicio, h.hora_fin, h.aula,
+             TO_CHAR(h.vigencia_desde,'YYYY-MM-DD') AS desde,
+             TO_CHAR(h.vigencia_hasta,'YYYY-MM-DD') AS hasta,
+             a.docente_id, a.gestion
+      FROM public.horarios_clase h
+      JOIN public.asignaciones_docentes a ON a.id = h.asignacion_id
+      JOIN public.docentes d ON d.id = a.docente_id
+      WHERE h.id=$1 AND h.activo=TRUE AND a.activo=TRUE AND d.activo=TRUE
+      FOR UPDATE OF h, a`, [horarioId]);
+    const anterior = anteriorR.rows[0];
+    if (!anterior) {
+      await cliente.query('ROLLBACK');
+      res.status(404).json({ mensaje: 'Horario no encontrado o inactivo.' }); return;
+    }
+    if (fecha <= anterior.desde || (anterior.hasta && fecha > anterior.hasta)) {
+      await cliente.query('ROLLBACK');
+      res.status(409).json({ mensaje: 'El cambio debe comenzar dentro de la vigencia del horario y después de su fecha de inicio.' });
+      return;
+    }
+    // Evita dos cambios simultáneos que crearían superposiciones.
+    await cliente.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2::text, 0))`,
+      [anterior.docente_id, anterior.gestion]);
+    const choque = await cliente.query(`
+      SELECT h.id FROM public.horarios_clase h
+      JOIN public.asignaciones_docentes a ON a.id=h.asignacion_id
+      WHERE a.docente_id=$1 AND a.gestion=$2 AND a.activo=TRUE AND h.activo=TRUE
+        AND h.id<>$3 AND h.dia_semana=$4
+        AND h.hora_inicio < $6::time AND h.hora_fin > $5::time
+        AND (h.vigencia_hasta IS NULL OR h.vigencia_hasta >= $7::date)
+        AND ( $8::date IS NULL OR h.vigencia_desde <= $8::date )
+      LIMIT 1`,
+      [anterior.docente_id, anterior.gestion, horarioId, dia, inicio, fin, fecha, anterior.hasta ?? null]);
+    if (choque.rowCount) {
+      await cliente.query('ROLLBACK');
+      res.status(409).json({ mensaje: 'El docente ya tiene otra clase en ese día, hora y periodo de vigencia.' });
+      return;
+    }
+    // Divide en dos periodos. No modifica día ni horas del registro antiguo.
+    await cliente.query(`UPDATE public.horarios_clase
+      SET vigencia_hasta=$2::date - 1 WHERE id=$1`, [horarioId, fecha]);
+    const nuevoR = await cliente.query(`
+      INSERT INTO public.horarios_clase
+        (asignacion_id, dia_semana, hora_inicio, hora_fin, aula, activo, vigencia_desde, vigencia_hasta)
+      VALUES ($1,$2,$3,$4,$5,TRUE,$6::date,$7::date) RETURNING id::text`,
+      [anterior.asignacion_id,dia,inicio,fin,sala,fecha,anterior.hasta ?? null]);
+    const nuevoId = nuevoR.rows[0].id as string;
+    await cliente.query(`
+      INSERT INTO public.cambios_horarios
+        (horario_anterior_id, horario_nuevo_id, vigencia_desde, motivo, autorizado_por)
+      VALUES ($1,$2,$3::date,$4,$5)`,
+      [horarioId,nuevoId,fecha,razon,res.locals.usuario.id]);
+    await cliente.query('COMMIT');
+    res.status(201).json({ mensaje: 'Nuevo horario programado. El anterior conserva su historial.', horario_nuevo_id: nuevoId });
+  } catch (error) {
+    await cliente.query('ROLLBACK').catch(() => undefined);
+    const e=errorDB(error); res.status(e.status).json({mensaje:e.mensaje});
+  } finally { cliente.release(); }
 });
 
 export default router;
