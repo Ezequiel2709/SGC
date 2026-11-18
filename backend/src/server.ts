@@ -6,6 +6,7 @@ import correspondenciaRouter from './routes/correspondencia.js';
 import plantelRouter from './routes/plantel.js';
 import asistenciaDocenteRouter from './routes/asistencia-docente.js';
 import { controlAsistenciaRouter, solicitudesDocenteRouter } from './routes/control-asistencia.js';
+import reportesAsistenciaRouter from './routes/reportes-asistencia.js';
 import { autenticar } from './middlewares/auth.js';
 import { permitirRoles } from './middlewares/roles.js';
 
@@ -30,6 +31,9 @@ app.use('/api/docente', autenticar, permitirRoles('docente'), solicitudesDocente
 
 // Dirección: supervisión de registros, fotos y decisiones auditables.
 app.use('/api/control-asistencia', autenticar, permitirRoles('directora'), controlAsistenciaRouter);
+
+// Reportes: consultas históricas y exportación accesibles solo a Dirección.
+app.use('/api/reportes-asistencia', autenticar, permitirRoles('directora'), reportesAsistenciaRouter);
 
 app.get('/api/privado-test', autenticar, permitirRoles('directora'), (_req, res) => {
   res.json({ mensaje: 'Acceso autorizado.', rol: res.locals.usuario.rol });

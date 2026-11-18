@@ -8,6 +8,7 @@ import {
   type ResumenPlantel,
 } from '../lib/plantel';
 import ControlAsistencia from './ControlAsistencia';
+import ReportesAsistencia from './ReportesAsistencia';
 
 type Props = { token: string };
 const dias = ['','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
@@ -270,6 +271,7 @@ export default function PlantelDocente({ token }: Props) {
       <div className="sgc-pagina-encabezado">
         <h2>Plantel Docente y Asistencia</h2>
         <p>Administración académica, supervisión de asistencias y solicitudes del plantel.</p>
+        <p><a href="#sgc-reportes-asistencia">Ir a reportes de asistencia ↓</a></p>
       </div>
       <div className="sgc-aviso">
         <strong>Acceso administrativo: Directora</strong>
@@ -280,6 +282,8 @@ export default function PlantelDocente({ token }: Props) {
       {cargando && <p role="status">Actualizando información desde PostgreSQL...</p>}
 
       <ControlAsistencia token={token} docentes={datos.docentes} />
+
+      <ReportesAsistencia token={token} docentes={datos.docentes} materias={datos.materias} />
 
       <form style={tarjeta} onSubmit={guardarDocente}>
         <h3>1. Registrar docente y crear su cuenta</h3>
