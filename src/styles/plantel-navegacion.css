@@ -1,0 +1,144 @@
+/* SGC | Navegación de Plantel Docente. Afecta solo al panel administrativo. */
+.sgc-plantel-pagina {
+  width: 100%;
+  max-width: 1350px;
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.sgc-plantel-pestanas {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+  margin: 14px 0 16px;
+  padding: 9px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #f4f7fb;
+  box-shadow: 0 3px 12px rgb(28 46 79 / 5%);
+}
+
+.sgc-plantel-pestana {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-height: 50px;
+  padding: 8px 9px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #2c3f5e;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.sgc-plantel-pestana:hover {
+  background: #e3eaf5;
+  border-color: #cbd6e5;
+}
+
+.sgc-plantel-pestana.seleccionada {
+  color: #fff;
+  background: #243b62;
+  border-color: #243b62;
+  box-shadow: 0 2px 6px rgb(36 59 98 / 15%);
+}
+
+.sgc-plantel-pestana:focus-visible,
+.sgc-plantel-vista button:focus-visible {
+  outline: 3px solid #6197e7;
+  outline-offset: 2px;
+}
+
+.sgc-plantel-contador {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #dae4f2;
+  color: #243b62;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sgc-plantel-pestana.seleccionada .sgc-plantel-contador {
+  background: rgb(255 255 255 / 20%);
+  color: #fff;
+}
+
+.sgc-plantel-vista {
+  min-width: 0;
+  padding: 23px;
+  border-radius: 14px;
+  border: 1px solid #dce4ee;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(28 46 79 / 4%);
+}
+
+.sgc-plantel-vista-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sgc-plantel-vista-cabecera h3 {
+  margin: 0 0 5px;
+  color: #203555;
+  font-size: 21px;
+}
+
+.sgc-plantel-vista-cabecera p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.sgc-plantel-chip {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid #d5e1f2;
+  border-radius: 999px;
+  background: #f4f7fc;
+  color: #344b70;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.sgc-plantel-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 14px;
+}
+
+.sgc-plantel-vista .sgc-tabla {
+  min-width: 610px;
+}
+
+.sgc-plantel-vista form,
+.sgc-plantel-vista [id^='sgc-edicion-'] {
+  scroll-margin-top: 108px;
+}
+
+.sgc-plantel-estado:empty { display: none; }
+
+@media (max-width: 1200px) {
+  .sgc-plantel-pestanas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .sgc-plantel-pestanas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 6px; }
+  .sgc-plantel-pestana { font-size: 12px; min-height: 46px; padding: 6px; }
+  .sgc-plantel-vista { padding: 13px; }
+  .sgc-plantel-vista-cabecera h3 { font-size: 18px; }
+  .sgc-plantel-acciones { justify-content: stretch; }
+  .sgc-plantel-acciones button { width: 100%; }
+}
