@@ -276,4 +276,210 @@ router.post('/horarios/:id/reprogramar', async (req, res) => {
   } finally { cliente.release(); }
 });
 
+
+// Directora: historial auditable de todas las versiones relacionadas con un horario.
+// La búsqueda recorre hacia adelante y atrás para recuperar cambios encadenados,
+// aunque se consulte una versión antigua o futura del horario.
+router.get('/horarios/:id/historial', async (req, res) => {
+  const horarioId = idValido(req.params.id);
+  if (!horarioId) {
+    res.status(400).json({ mensaje: 'Identificador de horario inválido.' });
+    return;
+  }
+  try {
+    const existe = await pool.query(
+      `SELECT 1 FROM public.horarios_clase WHERE id = $1`, [horarioId]);
+    if (!existe.rowCount) {
+      res.status(404).json({ mensaje: 'El horario indicado no existe.' });
+      return;
+    }
+    const resultado = await pool.query(`
+      WITH RECURSIVE enlaces (origen, destino) AS (
+        SELECT horario_anterior_id, horario_nuevo_id FROM public.cambios_horarios
+        UNION ALL
+        SELECT horario_nuevo_id, horario_anterior_id FROM public.cambios_horarios
+      ), serie (id) AS (
+        SELECT $1::bigint
+        UNION
+        SELECT e.destino FROM enlaces e JOIN serie s ON e.origen = s.id
+      )
+      SELECT c.id::text, c.horario_anterior_id::text, c.horario_nuevo_id::text,
+             TO_CHAR(c.vigencia_desde, 'YYYY-MM-DD') AS vigencia_desde,
+             TO_CHAR(c.fecha_cambio, 'YYYY-MM-DD HH24:MI') AS fecha_cambio,
+             c.motivo, c.autorizado_por::text,
+             COALESCE(p.nombre_completo, 'Usuario ' || c.autorizado_por::text) AS autorizado_nombre,
+             a.dia_semana AS anterior_dia,
+             TO_CHAR(a.hora_inicio, 'HH24:MI') AS anterior_inicio,
+             TO_CHAR(a.hora_fin, 'HH24:MI') AS anterior_fin,
+             a.aula AS anterior_aula,
+             TO_CHAR(a.vigencia_desde, 'YYYY-MM-DD') AS anterior_desde,
+             TO_CHAR(a.vigencia_hasta, 'YYYY-MM-DD') AS anterior_hasta,
+             n.dia_semana AS nuevo_dia,
+             TO_CHAR(n.hora_inicio, 'HH24:MI') AS nuevo_inicio,
+             TO_CHAR(n.hora_fin, 'HH24:MI') AS nuevo_fin,
+             n.aula AS nuevo_aula,
+             TO_CHAR(n.vigencia_desde, 'YYYY-MM-DD') AS nuevo_desde,
+             TO_CHAR(n.vigencia_hasta, 'YYYY-MM-DD') AS nuevo_hasta
+      FROM public.cambios_horarios c
+      JOIN serie s ON s.id = c.horario_anterior_id
+      JOIN public.horarios_clase a ON a.id = c.horario_anterior_id
+      JOIN public.horarios_clase n ON n.id = c.horario_nuevo_id
+      LEFT JOIN public.perfiles p ON p.id = c.autorizado_por
+      ORDER BY c.fecha_cambio DESC, c.id DESC
+      LIMIT 200`, [horarioId]);
+    res.json({ cambios: resultado.rows });
+  } catch (error) {
+    const e = errorDB(error);
+    res.status(e.status).json({ mensaje: e.mensaje });
+  }
+});
+
+
+
+// PARTE 3 | Corrección de datos administrativos. No cambia contraseñas ni borra historial.
+router.patch('/docentes/:id', async (req, res) => {
+  const id = idValido(req.params.id);
+  const { nombre_completo, correo, ci, codigo_docente, telefono, especialidad } = req.body ?? {};
+  const nombre = texto(nombre_completo, 150);
+  const email = texto(correo, 150)?.toLowerCase();
+  const identidad = texto(ci, 30);
+  const codigo = opcional(codigo_docente, 30);
+  const tel = opcional(telefono, 30);
+  const esp = opcional(especialidad, 120);
+  if (!id || !nombre || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !identidad ||
+      (codigo_docente != null && codigo_docente !== '' && !codigo) ||
+      (telefono != null && telefono !== '' && !tel) ||
+      (especialidad != null && especialidad !== '' && !esp)) {
+    res.status(400).json({ mensaje: 'Revisa el nombre, correo, CI y la longitud de los datos.' });
+    return;
+  }
+  const cliente = await pool.connect().catch(() => null);
+  if (!cliente) { res.status(500).json({ mensaje: 'No se pudo conectar a PostgreSQL.' }); return; }
+  try {
+    await cliente.query('BEGIN');
+    const docente = await cliente.query(`
+      SELECT d.perfil_id, p.rol FROM public.docentes d
+      LEFT JOIN public.perfiles p ON p.id=d.perfil_id
+      WHERE d.id=$1 FOR UPDATE OF d`, [id]);
+    if (!docente.rowCount) {
+      await cliente.query('ROLLBACK');
+      res.status(404).json({ mensaje: 'Docente no encontrado.' }); return;
+    }
+    if (!docente.rows[0].perfil_id || docente.rows[0].rol !== 'docente') {
+      await cliente.query('ROLLBACK');
+      res.status(409).json({ mensaje: 'Este docente no tiene una cuenta docente vinculada para actualizar nombre y correo.' }); return;
+    }
+    await cliente.query(`UPDATE public.docentes
+      SET ci=$2, codigo_docente=$3, telefono=$4, especialidad=$5 WHERE id=$1`,
+      [id, identidad, codigo, tel, esp]);
+    await cliente.query(`UPDATE public.perfiles
+      SET nombre_completo=$2, correo=$3 WHERE id=$1 AND rol='docente'`,
+      [docente.rows[0].perfil_id, nombre, email]);
+    await cliente.query('COMMIT');
+    res.json({ mensaje: 'Datos del docente actualizados. La contraseña no se modificó.' });
+  } catch (error) {
+    await cliente.query('ROLLBACK').catch(() => undefined);
+    const e=errorDB(error); res.status(e.status).json({ mensaje:e.mensaje });
+  } finally { cliente.release(); }
+});
+
+router.patch('/materias/:id', async (req, res) => {
+  const id=idValido(req.params.id);
+  const { codigo, nombre, semestre }=req.body ?? {};
+  const c=texto(codigo,30), n=texto(nombre,150);
+  const s=semestre === '' || semestre == null ? null : entero(semestre,1,12);
+  if (!id || !c || !n || (semestre !== '' && semestre != null && s === null)) {
+    res.status(400).json({ mensaje: 'Indica código, nombre y semestre válido (1 a 12).' }); return;
+  }
+  try {
+    const r=await pool.query(`UPDATE public.materias
+      SET codigo=$2, nombre=$3, semestre=$4 WHERE id=$1 RETURNING id`, [id,c,n,s]);
+    if (!r.rowCount) { res.status(404).json({ mensaje: 'Materia no encontrada.' }); return; }
+    res.json({ mensaje: 'Datos de la materia actualizados.' });
+  } catch (error) { const e=errorDB(error); res.status(e.status).json({mensaje:e.mensaje}); }
+});
+
+// Evita desactivar materias que todavía se utilizan en asignaciones activas.
+router.patch('/materias/:id/estado', async (req, res) => {
+  const id=idValido(req.params.id), activo=req.body?.activo;
+  if (!id || typeof activo !== 'boolean') {
+    res.status(400).json({ mensaje: 'Indica una materia y un estado válido.' }); return;
+  }
+  try {
+    const r=await pool.query(`UPDATE public.materias m SET activo=$2
+      WHERE m.id=$1 AND ($2=TRUE OR NOT EXISTS (
+        SELECT 1 FROM public.asignaciones_docentes a WHERE a.materia_id=m.id AND a.activo=TRUE
+      )) RETURNING id`, [id,activo]);
+    if (!r.rowCount) {
+      const existente=await pool.query('SELECT 1 FROM public.materias WHERE id=$1',[id]);
+      res.status(existente.rowCount ? 409 : 404).json({ mensaje: existente.rowCount
+        ? 'Desactiva primero las asignaciones activas de esta materia.' : 'Materia no encontrada.' });
+      return;
+    }
+    res.json({ mensaje: activo ? 'Materia activada.' : 'Materia desactivada sin eliminar sus registros.' });
+  } catch (error) { const e=errorDB(error); res.status(e.status).json({mensaje:e.mensaje}); }
+});
+
+// Cambiar docente/materia/gestión solo mientras la asignación no tenga clases creadas.
+// Si ya tiene horarios, se conserva la asignación como historial y se crea otra.
+router.patch('/asignaciones/:id', async (req, res) => {
+  const id=idValido(req.params.id);
+  const { docente_id, materia_id, gestion }=req.body ?? {};
+  const d=idValido(docente_id), m=idValido(materia_id), g=entero(gestion,2000,2100);
+  if (!id || !d || !m || g===null) {
+    res.status(400).json({ mensaje: 'Selecciona docente, materia y gestión válida.' }); return;
+  }
+  const cliente=await pool.connect().catch(() => null);
+  if (!cliente) { res.status(500).json({ mensaje: 'No se pudo conectar a PostgreSQL.' }); return; }
+  try {
+    await cliente.query('BEGIN');
+    const anterior=await cliente.query('SELECT activo FROM public.asignaciones_docentes WHERE id=$1 FOR UPDATE',[id]);
+    if (!anterior.rowCount) { await cliente.query('ROLLBACK');res.status(404).json({mensaje:'Asignación no encontrada.'});return; }
+    if (!anterior.rows[0].activo) {
+      await cliente.query('ROLLBACK');res.status(409).json({mensaje:'Activa la asignación antes de editarla.'});return;
+    }
+    const horarios=await cliente.query('SELECT 1 FROM public.horarios_clase WHERE asignacion_id=$1 LIMIT 1',[id]);
+    if (horarios.rowCount) {
+      await cliente.query('ROLLBACK');
+      res.status(409).json({mensaje:'Esta asignación ya tiene horarios. Para conservar el historial, desactívala y crea una nueva.'});return;
+    }
+    const r=await cliente.query(`UPDATE public.asignaciones_docentes a
+      SET docente_id=d.id, materia_id=m.id, gestion=$4
+      FROM public.docentes d, public.materias m
+      WHERE a.id=$1 AND d.id=$2 AND m.id=$3 AND d.activo=TRUE AND m.activo=TRUE
+      RETURNING a.id`,[id,d,m,g]);
+    if (!r.rowCount) {
+      await cliente.query('ROLLBACK');
+      res.status(400).json({mensaje:'El docente o la materia no existen o están inactivos.'});return;
+    }
+    await cliente.query('COMMIT');
+    res.json({mensaje:'Asignación actualizada.'});
+  } catch (error) {
+    await cliente.query('ROLLBACK').catch(()=>undefined);
+    const e=errorDB(error);res.status(e.status).json({mensaje:e.mensaje});
+  } finally { cliente.release(); }
+});
+
+// Desactivar no borra horarios ni fotografías históricos. React advierte antes de ejecutar.
+router.patch('/asignaciones/:id/estado', async (req, res) => {
+  const id=idValido(req.params.id), activo=req.body?.activo;
+  if (!id || typeof activo !== 'boolean') {
+    res.status(400).json({ mensaje: 'Indica una asignación y estado válido.' }); return;
+  }
+  try {
+    const r=await pool.query(`UPDATE public.asignaciones_docentes a SET activo=$2
+      WHERE a.id=$1 AND ($2=FALSE OR (
+        EXISTS(SELECT 1 FROM public.docentes d WHERE d.id=a.docente_id AND d.activo=TRUE)
+        AND EXISTS(SELECT 1 FROM public.materias m WHERE m.id=a.materia_id AND m.activo=TRUE)
+      )) RETURNING id`,[id,activo]);
+    if (!r.rowCount) {
+      const existente=await pool.query('SELECT 1 FROM public.asignaciones_docentes WHERE id=$1',[id]);
+      res.status(existente.rowCount ? 409 : 404).json({mensaje: existente.rowCount
+        ? 'El docente o la materia están inactivos. No se puede reactivar esta asignación.'
+        : 'Asignación no encontrada.'});return;
+    }
+    res.json({mensaje:activo ? 'Asignación activada.' : 'Asignación desactivada. Su historial se conserva.'});
+  } catch (error) { const e=errorDB(error);res.status(e.status).json({mensaje:e.mensaje}); }
+});
+
 export default router;

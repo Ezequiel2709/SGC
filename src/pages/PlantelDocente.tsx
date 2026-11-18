@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   obtenerPlantel, crearDocente, crearMateria, crearAsignacion, crearHorario, reprogramarHorario,
+  obtenerHistorialHorario, type HistorialCambioHorario,
+  editarDatosDocente, editarDatosMateria, editarDatosAsignacion,
+  establecerEstadoMateria, establecerEstadoAsignacion,
+  type Docente, type Materia, type Asignacion,
   type ResumenPlantel,
 } from '../lib/plantel';
 import ControlAsistencia from './ControlAsistencia';
@@ -50,6 +54,31 @@ export default function PlantelDocente({ token }: Props) {
   const [nuevaAula, setNuevaAula] = useState('');
   const [vigencia, setVigencia] = useState('');
   const [motivoCambio, setMotivoCambio] = useState('');
+
+  const [historialId, setHistorialId] = useState('');
+  const [historial, setHistorial] = useState<HistorialCambioHorario[]>([]);
+  const [historialCargando, setHistorialCargando] = useState(false);
+  const [historialError, setHistorialError] = useState('');
+  const consultaHistorialActual = useRef(0);
+
+  // Formularios de edición: se muestran solo al pulsar «Editar» en cada tabla.
+  const [edDocenteId, setEdDocenteId] = useState('');
+  const [edDocenteNombre, setEdDocenteNombre] = useState('');
+  const [edDocenteCorreo, setEdDocenteCorreo] = useState('');
+  const [edDocenteCi, setEdDocenteCi] = useState('');
+  const [edDocenteCodigo, setEdDocenteCodigo] = useState('');
+  const [edDocenteTelefono, setEdDocenteTelefono] = useState('');
+  const [edDocenteEspecialidad, setEdDocenteEspecialidad] = useState('');
+
+  const [edMateriaId, setEdMateriaId] = useState('');
+  const [edMateriaCodigo, setEdMateriaCodigo] = useState('');
+  const [edMateriaNombre, setEdMateriaNombre] = useState('');
+  const [edMateriaSemestre, setEdMateriaSemestre] = useState('');
+
+  const [edAsignacionId, setEdAsignacionId] = useState('');
+  const [edAsignacionDocente, setEdAsignacionDocente] = useState('');
+  const [edAsignacionMateria, setEdAsignacionMateria] = useState('');
+  const [edAsignacionGestion, setEdAsignacionGestion] = useState(2026);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -134,12 +163,107 @@ export default function PlantelDocente({ token }: Props) {
       aula:nuevaAula, vigencia_desde:vigencia, motivo:motivoCambio,
     }), 'Cambio de horario programado, sin alterar el historial anterior.', () => {
       setEditarId('');setVigencia('');setMotivoCambio('');
+      consultaHistorialActual.current++; setHistorialId(''); setHistorial([]);
     });
+  }
+
+  async function verHistorial(id: string) {
+    const numeroConsulta = ++consultaHistorialActual.current;
+    if (historialId === id) {
+      setHistorialId('');
+      setHistorial([]);
+      setHistorialError('');
+      setHistorialCargando(false);
+      return;
+    }
+    setHistorialId(id);
+    setHistorial([]);
+    setHistorialError('');
+    setHistorialCargando(true);
+    try {
+      const resultado = await obtenerHistorialHorario(token, id);
+      if (consultaHistorialActual.current !== numeroConsulta) return;
+      setHistorial(resultado.cambios);
+    } catch (err) {
+      if (consultaHistorialActual.current !== numeroConsulta) return;
+      setHistorialError(err instanceof Error ? err.message : 'No se pudo cargar el historial.');
+    } finally {
+      if (consultaHistorialActual.current === numeroConsulta) setHistorialCargando(false);
+    }
+  }
+
+  function comenzarEdicionDocente(d: Docente) {
+    setEdDocenteId(d.id);
+    setEdDocenteNombre(d.nombre_completo);
+    setEdDocenteCorreo(d.correo ?? '');
+    setEdDocenteCi(d.ci);
+    setEdDocenteCodigo(d.codigo_docente ?? '');
+    setEdDocenteTelefono(d.telefono ?? '');
+    setEdDocenteEspecialidad(d.especialidad ?? '');
+    setError(''); setMensaje('');
+  }
+  function guardarEdicionDocente(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!edDocenteId) return;
+    void ejecutar(() => editarDatosDocente(token, edDocenteId, {
+      nombre_completo: edDocenteNombre, correo: edDocenteCorreo, ci: edDocenteCi,
+      codigo_docente: edDocenteCodigo, telefono: edDocenteTelefono,
+      especialidad: edDocenteEspecialidad,
+    }), 'Datos del docente actualizados. Su contraseña se mantiene.', () => setEdDocenteId(''));
+  }
+  function comenzarEdicionMateria(m: Materia) {
+    setEdMateriaId(m.id);
+    setEdMateriaCodigo(m.codigo);
+    setEdMateriaNombre(m.nombre);
+    setEdMateriaSemestre(m.semestre == null ? '' : String(m.semestre));
+    setError(''); setMensaje('');
+  }
+  function guardarEdicionMateria(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!edMateriaId) return;
+    void ejecutar(() => editarDatosMateria(token, edMateriaId, {
+      codigo: edMateriaCodigo, nombre: edMateriaNombre,
+      semestre: edMateriaSemestre ? Number(edMateriaSemestre) : null,
+    }), 'Materia actualizada.', () => setEdMateriaId(''));
+  }
+  function cambiarMateria(id: string, activo: boolean) {
+    const aviso = activo
+      ? '¿Reactivar esta materia?'
+      : '¿Desactivar esta materia? No podrá desactivarse si tiene asignaciones activas.';
+    if (!window.confirm(aviso)) return;
+    void ejecutar(() => establecerEstadoMateria(token,id,activo),
+      activo ? 'Materia activada.' : 'Materia desactivada.', () => { if (edMateriaId===id) setEdMateriaId(''); });
+  }
+  function comenzarEdicionAsignacion(a: Asignacion) {
+    setEdAsignacionId(a.id);
+    setEdAsignacionDocente(a.docente_id);
+    setEdAsignacionMateria(a.materia_id);
+    setEdAsignacionGestion(a.gestion);
+    setError(''); setMensaje('');
+  }
+  function guardarEdicionAsignacion(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!edAsignacionId) return;
+    void ejecutar(() => editarDatosAsignacion(token, edAsignacionId, {
+      docente_id: edAsignacionDocente, materia_id: edAsignacionMateria,
+      gestion: edAsignacionGestion,
+    }), 'Asignación actualizada.', () => setEdAsignacionId(''));
+  }
+  function cambiarAsignacion(a: Asignacion) {
+    const textoConfirmacion = a.activo
+      ? `¿Desactivar la asignación de ${a.docente_nombre} — ${a.materia_nombre}? Desde ahora el docente no podrá marcar futuras clases de esta asignación. Las asistencias anteriores permanecerán guardadas.`
+      : `¿Reactivar la asignación de ${a.docente_nombre} — ${a.materia_nombre}?`;
+    if (!window.confirm(textoConfirmacion)) return;
+    void ejecutar(() => establecerEstadoAsignacion(token,a.id,!a.activo),
+      a.activo ? 'Asignación desactivada; historial conservado.' : 'Asignación reactivada.',
+      () => { if (edAsignacionId===a.id) setEdAsignacionId(''); });
   }
 
   const docentesActivos = datos.docentes.filter(d=>d.activo && d.perfil_id);
   const materiasActivas = datos.materias.filter(m=>m.activo);
   const asignacionesActivas = datos.asignaciones.filter(a=>a.activo);
+  const horarioHistorial = datos.horarios.find(h => h.id === historialId);
+  const asignacionHistorial = datos.asignaciones.find(a => a.id === horarioHistorial?.asignacion_id);
 
   return (
     <section className="sgc-correspondencia" style={{maxWidth:1200}}>
@@ -176,13 +300,31 @@ export default function PlantelDocente({ token }: Props) {
 
       <div style={{overflowX:'auto',marginBottom:24}}>
         <h3>Docentes registrados ({datos.docentes.length})</h3>
-        <table className="sgc-tabla"><thead><tr><th>Nombre</th><th>CI</th><th>Correo</th><th>Código</th><th>Especialidad</th><th>Activo</th></tr></thead>
+        <table className="sgc-tabla"><thead><tr><th>Nombre</th><th>CI</th><th>Correo</th><th>Código</th><th>Especialidad</th><th>Activo</th><th>Acción</th></tr></thead>
           <tbody>{datos.docentes.map(d=><tr key={d.id}>
             <td>{d.nombre_completo}</td><td>{d.ci}</td><td>{d.correo ?? 'Sin cuenta'}</td>
             <td>{d.codigo_docente || '—'}</td><td>{d.especialidad || '—'}</td><td>{d.activo?'Sí':'No'}</td>
-          </tr>)}{!datos.docentes.length && <tr><td colSpan={6}>Todavía no hay docentes.</td></tr>}</tbody>
+            <td><button type="button" disabled={ocupado || !d.perfil_id} onClick={()=>comenzarEdicionDocente(d)}>Editar</button></td>
+          </tr>)}{!datos.docentes.length && <tr><td colSpan={7}>Todavía no hay docentes.</td></tr>}</tbody>
         </table>
       </div>
+
+      {edDocenteId && <form style={tarjeta} onSubmit={guardarEdicionDocente}>
+        <h3>Editar datos del docente</h3>
+        <p>Modifica datos de identificación y contacto. La contraseña no cambia.</p>
+        <div style={fila}>
+          <label style={campo}>Nombre completo *<input value={edDocenteNombre} onChange={e=>setEdDocenteNombre(e.target.value)} maxLength={150} required/></label>
+          <label style={campo}>Correo *<input type="email" value={edDocenteCorreo} onChange={e=>setEdDocenteCorreo(e.target.value)} maxLength={150} required/></label>
+          <label style={campo}>CI *<input value={edDocenteCi} onChange={e=>setEdDocenteCi(e.target.value)} maxLength={30} required/></label>
+          <label style={campo}>Código docente<input value={edDocenteCodigo} onChange={e=>setEdDocenteCodigo(e.target.value)} maxLength={30}/></label>
+          <label style={campo}>Teléfono<input value={edDocenteTelefono} onChange={e=>setEdDocenteTelefono(e.target.value)} maxLength={30}/></label>
+          <label style={campo}>Especialidad<input value={edDocenteEspecialidad} onChange={e=>setEdDocenteEspecialidad(e.target.value)} maxLength={120}/></label>
+        </div>
+        <div style={fila}>
+          <button className="sgc-btn-principal" disabled={ocupado}>Guardar cambios</button>
+          <button type="button" onClick={()=>setEdDocenteId('')} disabled={ocupado}>Cancelar</button>
+        </div>
+      </form>}
 
       <form style={tarjeta} onSubmit={guardarMateria}>
         <h3>2. Registrar materia</h3>
@@ -195,11 +337,28 @@ export default function PlantelDocente({ token }: Props) {
       </form>
       <div style={{overflowX:'auto',marginBottom:24}}>
         <h3>Materias ({datos.materias.length})</h3>
-        <table className="sgc-tabla"><thead><tr><th>Código</th><th>Materia</th><th>Semestre</th><th>Activo</th></tr></thead>
-          <tbody>{datos.materias.map(m=><tr key={m.id}><td>{m.codigo}</td><td>{m.nombre}</td><td>{m.semestre ?? '—'}</td><td>{m.activo?'Sí':'No'}</td></tr>)}
-          {!datos.materias.length && <tr><td colSpan={4}>Todavía no hay materias.</td></tr>}</tbody>
+        <table className="sgc-tabla"><thead><tr><th>Código</th><th>Materia</th><th>Semestre</th><th>Activo</th><th>Acción</th></tr></thead>
+          <tbody>{datos.materias.map(m=><tr key={m.id}><td>{m.codigo}</td><td>{m.nombre}</td><td>{m.semestre ?? '—'}</td><td>{m.activo?'Sí':'No'}</td>
+            <td><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              <button type="button" disabled={ocupado} onClick={()=>comenzarEdicionMateria(m)}>Editar</button>
+              <button type="button" disabled={ocupado} onClick={()=>cambiarMateria(m.id,!m.activo)}>{m.activo?'Desactivar':'Activar'}</button>
+            </div></td></tr>)}
+          {!datos.materias.length && <tr><td colSpan={5}>Todavía no hay materias.</td></tr>}</tbody>
         </table>
       </div>
+
+      {edMateriaId && <form style={tarjeta} onSubmit={guardarEdicionMateria}>
+        <h3>Editar materia</h3>
+        <div style={fila}>
+          <label style={campo}>Código *<input value={edMateriaCodigo} onChange={e=>setEdMateriaCodigo(e.target.value)} maxLength={30} required/></label>
+          <label style={campo}>Nombre *<input value={edMateriaNombre} onChange={e=>setEdMateriaNombre(e.target.value)} maxLength={150} required/></label>
+          <label style={campo}>Semestre<input type="number" min={1} max={12} value={edMateriaSemestre} onChange={e=>setEdMateriaSemestre(e.target.value)}/></label>
+        </div>
+        <div style={fila}>
+          <button className="sgc-btn-principal" disabled={ocupado}>Guardar cambios</button>
+          <button type="button" disabled={ocupado} onClick={()=>setEdMateriaId('')}>Cancelar</button>
+        </div>
+      </form>}
 
       <form style={tarjeta} onSubmit={guardarAsignacion}>
         <h3>3. Asignar materia a docente</h3>
@@ -216,11 +375,39 @@ export default function PlantelDocente({ token }: Props) {
       </form>
       <div style={{overflowX:'auto',marginBottom:24}}>
         <h3>Asignaciones ({datos.asignaciones.length})</h3>
-        <table className="sgc-tabla"><thead><tr><th>Docente</th><th>Materia</th><th>Gestión</th><th>Activo</th></tr></thead>
-          <tbody>{datos.asignaciones.map(a=><tr key={a.id}><td>{a.docente_nombre}</td><td>{a.materia_nombre}</td><td>{a.gestion}</td><td>{a.activo?'Sí':'No'}</td></tr>)}
-          {!datos.asignaciones.length && <tr><td colSpan={4}>Todavía no hay asignaciones.</td></tr>}</tbody>
+        <table className="sgc-tabla"><thead><tr><th>Docente</th><th>Materia</th><th>Gestión</th><th>Activo</th><th>Acción</th></tr></thead>
+          <tbody>{datos.asignaciones.map(a=>{
+            const conHorarios=datos.horarios.some(h=>h.asignacion_id===a.id);
+            return <tr key={a.id}><td>{a.docente_nombre}</td><td>{a.materia_nombre}</td><td>{a.gestion}</td><td>{a.activo?'Sí':'No'}</td>
+              <td><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                <button type="button" disabled={ocupado || !a.activo || conHorarios}
+                  title={conHorarios?'Tiene horarios: desactiva esta asignación y crea otra para conservar las asistencias.':'Editar asignación sin horarios'}
+                  onClick={()=>comenzarEdicionAsignacion(a)}>Editar</button>
+                <button type="button" disabled={ocupado} onClick={()=>cambiarAsignacion(a)}>{a.activo?'Desactivar':'Activar'}</button>
+              </div></td>
+            </tr>;
+          })}
+          {!datos.asignaciones.length && <tr><td colSpan={5}>Todavía no hay asignaciones.</td></tr>}</tbody>
         </table>
       </div>
+
+      {edAsignacionId && <form style={tarjeta} onSubmit={guardarEdicionAsignacion}>
+        <h3>Editar asignación sin horarios</h3>
+        <p>Si una asignación ya tiene horarios, no se puede cambiar su docente o materia: desactívala y crea otra para conservar el historial.</p>
+        <div style={fila}>
+          <label style={campo}>Docente *<select value={edAsignacionDocente} onChange={e=>setEdAsignacionDocente(e.target.value)} required>
+            <option value="">Seleccionar docente</option>{docentesActivos.map(d=><option key={d.id} value={d.id}>{d.nombre_completo}</option>)}
+          </select></label>
+          <label style={campo}>Materia *<select value={edAsignacionMateria} onChange={e=>setEdAsignacionMateria(e.target.value)} required>
+            <option value="">Seleccionar materia</option>{materiasActivas.map(m=><option key={m.id} value={m.id}>{m.codigo} — {m.nombre}</option>)}
+          </select></label>
+          <label style={campo}>Gestión *<input type="number" min={2000} max={2100} value={edAsignacionGestion} onChange={e=>setEdAsignacionGestion(Number(e.target.value))} required/></label>
+        </div>
+        <div style={fila}>
+          <button className="sgc-btn-principal" disabled={ocupado}>Guardar cambios</button>
+          <button type="button" disabled={ocupado} onClick={()=>setEdAsignacionId('')}>Cancelar</button>
+        </div>
+      </form>}
 
       <form style={tarjeta} onSubmit={guardarHorario}>
         <h3>4. Registrar horario de clase</h3>
@@ -246,11 +433,53 @@ export default function PlantelDocente({ token }: Props) {
             return <tr key={h.id}><td>{a?.docente_nombre ?? '—'}</td><td>{a?.materia_nombre ?? '—'}</td>
               <td>{dias[h.dia_semana] ?? h.dia_semana}</td><td>{h.hora_inicio}–{h.hora_fin}</td><td>{h.aula||'—'}</td>
               <td>{h.vigencia_desde}</td><td>{h.vigencia_hasta ?? 'Sin término'}</td>
-              <td><button type="button" disabled={ocupado || !h.activo || (!!h.vigencia_hasta && h.vigencia_hasta <= new Date().toISOString().slice(0,10))}
-                onClick={()=>editarHorario(h.id)}>Editar</button></td></tr>;
+              <td>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                  <button type="button" disabled={ocupado || !h.activo || (!!h.vigencia_hasta && h.vigencia_hasta <= new Date().toISOString().slice(0,10))}
+                    onClick={()=>editarHorario(h.id)}>Editar</button>
+                  <button type="button" aria-expanded={historialId===h.id} aria-controls="sgc-historial-horarios"
+                    onClick={()=>{void verHistorial(h.id);}}>
+                    {historialId===h.id ? 'Ocultar historial' : 'Ver historial'}
+                  </button>
+                </div>
+              </td></tr>;
           })}{!datos.horarios.length && <tr><td colSpan={8}>Todavía no hay horarios.</td></tr>}</tbody>
         </table>
       </div>
+
+      {historialId && <section id="sgc-historial-horarios" style={tarjeta} aria-label="Historial de cambios del horario">
+        <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'start',flexWrap:'wrap'}}>
+          <div>
+            <h3 style={{marginTop:0}}>Historial de cambios de horario</h3>
+            <p style={{marginBottom:4}}><strong>{asignacionHistorial?.docente_nombre ?? 'Docente'} — {asignacionHistorial?.materia_nombre ?? 'Materia'}</strong></p>
+            <p style={{marginBottom:0}}>Cada cambio conserva el motivo, los horarios anterior y nuevo, y quién lo autorizó.</p>
+          </div>
+          <button type="button" onClick={()=>{consultaHistorialActual.current++;setHistorialId('');setHistorial([]);setHistorialError('');setHistorialCargando(false);}}>Cerrar historial</button>
+        </div>
+        {historialCargando && <p role="status">Consultando historial...</p>}
+        {historialError && <div role="alert" style={{color:'#b91c1c'}}>{historialError}</div>}
+        {!historialCargando && !historialError && historial.length===0 && <p>Este horario todavía no tiene cambios registrados.</p>}
+        {!historialCargando && !historialError && historial.map(c=><article key={c.id} style={{border:'1px solid #ddd6e7',borderRadius:10,padding:14,display:'grid',gap:10}}>
+          <strong>Cambio #{c.id} · Vigente desde {c.vigencia_desde}</strong>
+          <div style={fila}>
+            <div style={{...campo,background:'#f8f8fa',padding:10,borderRadius:8}}>
+              <strong>Horario anterior</strong>
+              <span>{dias[c.anterior_dia]} · {c.anterior_inicio}–{c.anterior_fin}</span>
+              <span>Aula: {c.anterior_aula || 'Sin aula'}</span>
+              <small>Vigente: {c.anterior_desde} al {c.anterior_hasta ?? 'sin término'}</small>
+            </div>
+            <div style={{...campo,background:'#f1f8f4',padding:10,borderRadius:8}}>
+              <strong>Horario nuevo</strong>
+              <span>{dias[c.nuevo_dia]} · {c.nuevo_inicio}–{c.nuevo_fin}</span>
+              <span>Aula: {c.nuevo_aula || 'Sin aula'}</span>
+              <small>Vigente: {c.nuevo_desde} al {c.nuevo_hasta ?? 'sin término'}</small>
+            </div>
+          </div>
+          <div><strong>Motivo:</strong> {c.motivo}</div>
+          <div><strong>Autorizado por:</strong> {c.autorizado_nombre}</div>
+          <small><strong>Registrado el:</strong> {c.fecha_cambio} (hora de Bolivia)</small>
+        </article>)}
+      </section>}
 
       {editarId && <form id="sgc-edicion-horario" style={tarjeta} onSubmit={guardarCambioHorario}>
         <h3>5. Programar cambio de horario</h3>
