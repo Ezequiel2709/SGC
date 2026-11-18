@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { pool } from './db.js';
@@ -13,7 +14,52 @@ import { permitirRoles } from './middlewares/roles.js';
 const app = express();
 const PORT = Number(process.env.PORT ?? 3000);
 
-app.use(cors());
+// CORS controla qué páginas pueden LEER respuestas de la API desde un navegador.
+// No reemplaza JWT ni los permisos de cada rol.
+// En desarrollo, Vite usa /api mediante su proxy; esta lista cubre además
+// llamadas directas desde el navegador local.
+const origenesDesarrollo = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
+// Ejemplo en backend/.env (sin barra final):
+// SGC_ALLOWED_ORIGINS=https://sgc.universidad.edu.bo,https://frontend.ejemplo.bo
+const origenesConfigurados = (process.env.SGC_ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map((origen) => origen.trim())
+  .filter(Boolean);
+
+// Evitar valores genéricos ("*") o direcciones con rutas: se permite
+// solamente un origen http(s) exacto, con puerto opcional.
+for (const origen of origenesConfigurados) {
+  let url: URL;
+  try {
+    url = new URL(origen);
+  } catch {
+    throw new Error(`Origen CORS inválido en SGC_ALLOWED_ORIGINS: ${origen}`);
+  }
+  if (!['http:', 'https:'].includes(url.protocol) ||
+      url.origin === 'null' || url.username || url.password ||
+      (url.href !== `${url.origin}/` && url.href !== url.origin)) {
+    throw new Error(`El origen CORS debe ser una dirección http(s) sin rutas: ${origen}`);
+  }
+}
+
+const origenesPermitidos = new Set([
+  ...(process.env.NODE_ENV === 'production' ? [] : origenesDesarrollo),
+  ...origenesConfigurados.map((origen) => new URL(origen).origin),
+]);
+
+app.use(cors({
+  origin: (origen, callback) => {
+    // Peticiones sin encabezado Origin (por ejemplo, curl o backend a backend).
+    if (!origen) { callback(null, true); return; }
+    callback(null, origenesPermitidos.has(origen));
+  },
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRouter);
