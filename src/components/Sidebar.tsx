@@ -37,9 +37,9 @@ export default function Sidebar({
     },
     {
       id: 'asistencia',
-      nombre: 'Plantel Docente y Asistencia',
+      nombre: rol === 'docente' ? 'Mi asistencia' : 'Plantel Docente y Asistencia',
       icono: '📅',
-      disponible: rol === 'directora',
+      disponible: rol === 'directora' || rol === 'docente',
     },
     {
       id: 'titulaciones',
