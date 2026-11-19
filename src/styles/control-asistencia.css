@@ -1,0 +1,31 @@
+.control-asistencia{background:#fff;border:1px solid #d6e1ed;border-radius:14px;padding:20px;margin-bottom:28px;color:#243b62}
+.control-cabecera{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.control-cabecera h3{font-size:22px;margin:0 0 8px}
+.control-cabecera p{font-size:14px;color:#617389;margin:0;line-height:1.5}
+.control-cabecera .docente-boton{margin-top:0}
+.control-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+.control-resumen>div{background:#edf3fb;border:1px solid #d8e5f2;border-radius:10px;padding:14px;display:grid;gap:6px}
+.control-resumen strong{font-size:26px;color:#1a4c83}
+.control-resumen span{font-size:12px;color:#5c7187}
+.control-encabezado-tabla{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:20px 0 6px}
+.control-encabezado-tabla h4,.control-asistencia h4{font-size:17px;margin:20px 0 12px}
+.control-encabezado-tabla h4{margin:0}
+.control-encabezado-tabla label{display:grid;gap:4px;font-size:12px}
+.control-encabezado-tabla select,.control-encabezado-tabla input,.control-solicitud textarea{border:1px solid #b5c7d9;border-radius:8px;padding:9px;color:#243b62;background:#fff}
+.control-ayuda{color:#667b91;font-size:12px}
+.control-tabla-scroll{overflow-x:auto}
+.control-tabla{min-width:700px}
+.control-tabla small{display:block;font-size:11px;color:#64748b;margin-top:5px}
+.control-link{border:1px solid #9bbbd9;background:#eaf3fc;color:#154e83;border-radius:6px;padding:7px 11px;font-weight:600;cursor:pointer}
+.control-sin-foto{font-size:12px;color:#64748b}
+.control-solicitudes{display:grid;gap:12px}
+.control-solicitud{border:1px solid #d8e4f0;background:#fbfdff;border-radius:11px;padding:16px}
+.control-solicitud-titulo{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.control-solicitud p{font-size:13px;margin:9px 0;line-height:1.5}
+.control-solicitud small{color:#617389}
+.control-solicitud label{display:grid;gap:7px;font-size:13px;font-weight:700;margin-top:14px}
+.control-solicitud textarea{font-weight:400;max-width:100%;width:100%;resize:vertical}
+.control-acciones{display:flex;gap:10px}
+.control-revisadas{display:grid;gap:6px}
+.control-revisadas p{background:#f3f7fc;border-radius:7px;margin:0;padding:11px;font-size:13px}
+@media(max-width:680px){.control-asistencia{padding:12px}.control-cabecera{display:block}.control-cabecera .docente-boton{margin-top:10px}}

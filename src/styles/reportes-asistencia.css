@@ -1,0 +1,48 @@
+.sgc-reporte-asistencias{background:#fff;border:1px solid #d6e1ed;border-radius:14px;padding:22px;margin-bottom:28px;color:#243b62}
+.sgc-reporte-cabecera h3{font-size:22px;margin:0 0 8px}
+.sgc-reporte-cabecera p{margin:0;color:#617389;font-size:14px}
+.sgc-reporte-filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:20px 0}
+.sgc-reporte-filtros label{display:grid;gap:5px;font-size:12px;font-weight:600;flex:1 1 140px;min-width:110px}
+.sgc-reporte-filtros select,.sgc-reporte-filtros input{width:100%;border:1px solid #b5c7d9;border-radius:8px;padding:9px;min-height:40px;background:#fff;color:#243b62}
+.sgc-reporte-filtros button{min-height:40px}
+.sgc-reporte-titulo-impresion h4{margin:22px 0 6px;font-size:18px}
+.sgc-reporte-titulo-impresion p{color:#64748b;font-size:13px;margin:0}
+.sgc-reporte-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:16px 0}
+.sgc-reporte-resumen>div{display:grid;gap:5px;padding:13px;border:1px solid #dde6ef;border-radius:10px;background:#f6f9fc}
+.sgc-reporte-resumen strong{font-size:23px;color:#22568f}
+.sgc-reporte-resumen span{font-size:12px;color:#546b83}
+.sgc-reporte-indicador{border-left:3px solid #1e6599;padding:8px 12px;background:#f6f9fc;font-size:13px}
+.sgc-reporte-indicador strong{font-size:21px}
+.sgc-reporte-indicador small{display:block;color:#687a8f;margin-top:5px}
+.sgc-reporte-aviso{font-size:12px;line-height:1.55;background:#fef9e7;border:1px solid #e5d8ad;padding:12px;border-radius:9px;color:#65522b}
+.sgc-reporte-acciones{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.sgc-reporte-asistencias h4{margin:18px 0 10px}
+.sgc-reporte-scroll{overflow-x:auto}
+.sgc-reporte-tabla{min-width:680px}
+.sgc-reporte-tabla td,.sgc-reporte-tabla th{font-size:12px}
+.sgc-reporte-estado{display:inline-block;border-radius:12px;padding:5px 8px;background:#eef2f7;color:#334155;font-size:11px;font-weight:600;white-space:nowrap}
+.sgc-reporte-estado.estado-marcada,.sgc-reporte-estado.estado-corregida{background:#dcfce7;color:#166534}
+.sgc-reporte-estado.estado-justificada{background:#dbeafe;color:#1d4ed8}
+.sgc-reporte-estado.estado-sin_registro,.sgc-reporte-estado.estado-falta_registrada{background:#fee2e2;color:#991b1b}
+.sgc-reporte-paginacion{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:12px;font-size:13px}
+.sgc-reporte-paginacion button{border:1px solid #bacbdc;background:#f6f9fd;border-radius:8px;padding:8px 12px;cursor:pointer;color:#243b62}
+.sgc-reporte-paginacion button:disabled{opacity:.45;cursor:default}
+.sgc-reporte-vacio{padding:18px;background:#f4f7fb;border-radius:10px;color:#617389}
+.sgc-reporte-tabla-impresion{display:none}
+@media(max-width:700px){.sgc-reporte-asistencias{padding:14px}.sgc-reporte-filtros label{min-width:45%}.sgc-reporte-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{
+  @page{size:A4 landscape;margin:11mm}
+  body *{visibility:hidden!important}
+  .sgc-reporte-asistencias,.sgc-reporte-asistencias *{visibility:visible!important}
+  .sgc-reporte-asistencias{position:absolute!important;top:0!important;left:0!important;width:100%!important;border:0!important;margin:0!important;padding:0!important;color:#000!important}
+  .sgc-reporte-cabecera,.sgc-reporte-filtros,.sgc-reporte-acciones,.sgc-reporte-tabla-pantalla,.sgc-reporte-vacio,.sgc-reporte-asistencias>h4{display:none!important}
+  .sgc-reporte-tabla-impresion{display:table!important;border-collapse:collapse;width:100%;font-size:10px}
+  .sgc-reporte-tabla-impresion th,.sgc-reporte-tabla-impresion td{border:1px solid #aaa;padding:5px;text-align:left;overflow-wrap:anywhere}
+  .sgc-reporte-tabla-impresion thead{display:table-header-group}
+  .sgc-reporte-tabla-impresion tr{break-inside:avoid}
+  .sgc-reporte-resumen{grid-template-columns:repeat(5,1fr);gap:6px}
+  .sgc-reporte-resumen>div{border:1px solid #aaa;background:white;padding:7px}
+  .sgc-reporte-resumen strong{font-size:16px;color:#000}
+  .sgc-reporte-resumen span,.sgc-reporte-aviso{font-size:9px;color:#333}
+  .sgc-reporte-indicador{font-size:11px;padding:6px}
+}

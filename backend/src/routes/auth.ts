@@ -1,4 +1,3 @@
-
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -25,8 +24,8 @@ router.post('/login', async (req, res) => {
         }
 
         const resultado = await pool.query(
-            `SELECT id, nombre_completo, correo, rol, activo, password_hash
-       FROM perfiles
+            `SELECT id, nombre_completo, correo, rol, activo, password_hash, version_sesion
+       FROM public.perfiles
        WHERE LOWER(correo) = LOWER($1)
        LIMIT 1`,
             [correo.trim()]
@@ -60,12 +59,14 @@ router.post('/login', async (req, res) => {
             return;
         }
 
+        // La versión de sesión procede de PostgreSQL, nunca del cliente.
         const token = jwt.sign(
-            { rol: perfil.rol },
+            { rol: perfil.rol, version_sesion: perfil.version_sesion },
             config.jwtSecret,
             {
                 subject: String(perfil.id),
                 expiresIn: '1h',
+                algorithm: 'HS256',
             }
         );
 
