@@ -1,4 +1,3 @@
-
 import type { RequestHandler } from 'express';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { config } from '../config.js';
@@ -17,7 +16,9 @@ export const autenticar: RequestHandler = async (req, res, next) => {
   const token = autorizacion.slice(7);
 
   try {
-    const decodificado = jwt.verify(token, config.jwtSecret);
+    const decodificado = jwt.verify(token, config.jwtSecret, {
+      algorithms: ['HS256'],
+    });
 
     if (
       typeof decodificado === 'string' ||
@@ -31,8 +32,21 @@ export const autenticar: RequestHandler = async (req, res, next) => {
 
     const usuarioToken = decodificado as JwtPayload;
 
+    // Los tokens emitidos antes de esta actualización no incluyen la versión.
+    // Deben iniciar sesión de nuevo y obtener un token actualizado.
+    if (
+      typeof usuarioToken.version_sesion !== 'number' ||
+      !Number.isSafeInteger(usuarioToken.version_sesion) ||
+      usuarioToken.version_sesion < 0
+    ) {
+      res.status(401).json({
+        mensaje: 'Sesión antigua o inválida. Inicia sesión nuevamente.',
+      });
+      return;
+    }
+
     const resultado = await pool.query(
-      `SELECT id, rol, activo
+      `SELECT id, rol, activo, version_sesion
        FROM public.perfiles
        WHERE id = $1`,
       [usuarioToken.sub]
@@ -43,6 +57,13 @@ export const autenticar: RequestHandler = async (req, res, next) => {
     if (!perfil || !perfil.activo) {
       res.status(401).json({
         mensaje: 'La cuenta no existe o está desactivada.',
+      });
+      return;
+    }
+
+    if (usuarioToken.version_sesion !== perfil.version_sesion) {
+      res.status(401).json({
+        mensaje: 'Sesión revocada. Inicia sesión nuevamente.',
       });
       return;
     }
