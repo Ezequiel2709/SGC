@@ -5,6 +5,8 @@ import {
 } from '../lib/controlAsistencia';
 import type { Docente } from '../lib/plantel';
 import '../styles/control-asistencia.css';
+import ModalDocenteSGC from '../components/ModalDocenteSGC';
+import { RefreshCw, Camera, CheckCircle2, XCircle, ClipboardCheck, Clock3 } from 'lucide-react';
 
 type Props = { token: string; docentes: Docente[] };
 const origenTexto: Record<string,string> = {
@@ -81,16 +83,16 @@ export default function ControlAsistencia({ token, docentes }: Props) {
 
   return <section className="control-asistencia" aria-label="Control de asistencias">
     <div className="control-cabecera">
-      <div><h3>Control de asistencia docente</h3><p>Registros y fotografías del personal docente. Se actualiza cada 30 segundos mientras esta pantalla está abierta.</p></div>
+      <div className="sgc-control-cabecera-titulo"><ClipboardCheck size={23} aria-hidden="true" /><div><h3>Control de asistencia docente</h3><p>Registros y fotografías del personal docente. Se actualiza cada 30 segundos mientras esta pantalla está abierta.</p></div></div>
       <button type="button" className="docente-boton secundario" disabled={cargando || !!procesando}
-        onClick={() => void actualizar()}>{cargando ? 'Actualizando…' : 'Actualizar ahora'}</button>
+        onClick={() => void actualizar()}><RefreshCw size={16} aria-hidden="true" /> {cargando ? 'Actualizando…' : 'Actualizar ahora'}</button>
     </div>
     {error && <p className="docente-alerta error" role="alert">{error}</p>}
     {mensaje && <p className="docente-alerta exito" role="status">{mensaje}</p>}
     <div className="control-resumen">
-      <div><strong>{filtrados.length}</strong><span>registros mostrados</span></div>
-      <div><strong>{pendientes.length}</strong><span>solicitudes pendientes</span></div>
-      <div><strong>{filtrados.filter(x => x.origen_registro === 'normal').length}</strong><span>marcaciones normales</span></div>
+      <div><ClipboardCheck size={19} aria-hidden="true" /><strong>{filtrados.length}</strong><span>registros mostrados</span></div>
+      <div><Clock3 size={19} aria-hidden="true" /><strong>{pendientes.length}</strong><span>solicitudes pendientes</span></div>
+      <div><Camera size={19} aria-hidden="true" /><strong>{filtrados.filter(x => x.origen_registro === 'normal').length}</strong><span>marcaciones normales</span></div>
     </div>
     <div className="control-encabezado-tabla">
       <h4>Asistencias registradas</h4>
@@ -112,9 +114,9 @@ export default function ControlAsistencia({ token, docentes }: Props) {
         {filtrados.map(r => <tr key={r.id}>
           <td>{r.fecha}</td><td>{r.docente_nombre}</td><td>{r.materia}<small>{r.aula || 'Aula no especificada'}</small></td>
           <td>{r.hora_inicio}</td>
-          <td><strong>{r.estado}</strong><small>{origenTexto[r.origen_registro] || r.origen_registro || 'Normal'}
+          <td><strong className={`sgc-control-etiqueta ${r.origen_registro === 'normal' ? 'sgc-control-etiqueta-normal' : 'sgc-control-etiqueta-administrativa'}`}>{r.estado}</strong><small>{origenTexto[r.origen_registro] || r.origen_registro || 'Normal'}
             {r.origen_registro === 'normal' ? ` · Marcado ${r.hora_registro}` : ''}</small></td>
-          <td>{r.tiene_foto ? <button type="button" className="control-link" onClick={() => void verFoto(r)}>Ver fotografía</button>
+          <td>{r.tiene_foto ? <button type="button" className="control-link" onClick={() => void verFoto(r)}><Camera size={15} aria-hidden="true" /> Ver fotografía</button>
             : <span className="control-sin-foto">Sin fotografía {r.origen_registro !== 'normal' ? '(resolución)' : ''}</span>}</td>
         </tr>)}
         {!filtrados.length && <tr><td colSpan={6}>{cargando ? 'Buscando asistencias…' : 'No hay registros para este filtro.'}</td></tr>}
@@ -133,9 +135,9 @@ export default function ControlAsistencia({ token, docentes }: Props) {
             placeholder="Ej.: Se verificó el justificativo o falta documentación" /></label>
         <div className="control-acciones">
           <button type="button" className="docente-boton" disabled={!!procesando}
-            onClick={() => void decidir(s, 'aprobada')}>Aprobar</button>
+            onClick={() => void decidir(s, 'aprobada')}><CheckCircle2 size={16} aria-hidden="true" /> Aprobar</button>
           <button type="button" className="docente-boton secundario" disabled={!!procesando}
-            onClick={() => void decidir(s, 'rechazada')}>Rechazar</button>
+            onClick={() => void decidir(s, 'rechazada')}><XCircle size={16} aria-hidden="true" /> Rechazar</button>
         </div>
       </article>)}
     </div> : <p className="docente-vacio">No hay solicitudes pendientes.</p>}
@@ -144,12 +146,14 @@ export default function ControlAsistencia({ token, docentes }: Props) {
       <p key={s.id}><strong>{s.docente_nombre}</strong> · {s.materia} · {s.fecha_clase} · {s.tipo} · <strong>{s.estado}</strong>
         {s.observacion_revision ? ` — ${s.observacion_revision}` : ''}</p>)}</div>
       : <p className="docente-vacio">Todavía no hay solicitudes revisadas.</p>}
-    {urlFoto && <div className="docente-visor" role="dialog" aria-modal="true" aria-label="Evidencia fotográfica">
-      <div className="docente-visor-contenido">
-        <p><strong>{tituloFoto}</strong></p>
-        <button type="button" className="docente-boton secundario" onClick={() => setUrlFoto(null)}>Cerrar fotografía</button>
+    {urlFoto && <ModalDocenteSGC titulo="Evidencia fotográfica" descripcion={tituloFoto}
+      ocupado={false} onCerrar={() => setUrlFoto(null)}>
+      <div className="sgc-control-visor-foto">
         <img src={urlFoto} alt={`Evidencia fotográfica de ${tituloFoto}`} />
+        <div className="sgc-docente-modal-acciones">
+          <button type="button" className="sgc-docente-modal-cancelar" onClick={() => setUrlFoto(null)}>Cerrar fotografía</button>
+        </div>
       </div>
-    </div>}
+    </ModalDocenteSGC>}
   </section>;
 }

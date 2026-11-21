@@ -1,0 +1,235 @@
+/* SGC | Tema unificado, revisión del diagnóstico del 21-11-2026.
+   Una sola fuente: <html data-sgc-tema="claro|oscuro">, que YA establece Header.tsx.
+   No MutationObserver, no JS de detección, no cambios en autenticación ni backend.
+   Se importa al final de main.tsx tras App.tsx. */
+
+/* 1. Base general. Las variables claras/oscuras las declara dashboard-redisenio.css. */
+:root[data-sgc-tema='claro'] { color-scheme: light; }
+:root[data-sgc-tema='oscuro'] { color-scheme: dark; }
+
+html, body, #root { min-height: 100%; }
+body, #root { background: var(--sgc-fondo, #f2f5fa) !important; color: var(--sgc-texto, #1a2a42); }
+.sgc-layout,
+.sgc-layout .sgc-contenido-principal,
+.sgc-layout .sgc-contenido {
+  background: var(--sgc-fondo, #f2f5fa) !important;
+  color: var(--sgc-texto, #1a2a42);
+}
+.sgc-layout .sgc-header {
+  background: var(--sgc-superficie, #fff) !important;
+  color: var(--sgc-texto, #1a2a42) !important;
+  border-color: var(--sgc-borde, #e2e8f1) !important;
+}
+.sgc-layout .sgc-header :is(h1, h2, strong) { color: var(--sgc-texto, #1a2a42); }
+.sgc-layout .sgc-header :is(p, small, .sgc-usuario-info span) { color: var(--sgc-texto-suave, #6c7b92); }
+.sgc-layout .sgc-header :is(.sgc-tema-toggle, .sgc-btn-salir) {
+  background: var(--sgc-superficie, #fff);
+  color: var(--sgc-texto, #1a2a42);
+  border-color: var(--sgc-borde, #e2e8f1);
+}
+.sgc-layout .sgc-header .sgc-btn-salir { color: var(--sgc-rojo, #bd2944); }
+.sgc-layout .sgc-header :is(.sgc-tema-toggle, .sgc-btn-salir):hover {
+  background: var(--sgc-superficie-suave, #f7f9fc);
+}
+
+/* 2. Sidebar institucional continuo: no debe desplazarse con una tabla larga.
+   El Bloque 5 lo cambió a position: relative; aquí recuperamos sticky. */
+@media (min-width: 701px) {
+  .sgc-layout .sgc-sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    align-self: flex-start;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+.sgc-layout .sgc-sidebar {
+  background-color: #c50037 !important;
+  background-image: linear-gradient(180deg,
+    #062e70 0%, #0d2f70 27%, #292656 55%, #78193e 80%, #d00036 100%) !important;
+  color: #fff !important;
+}
+.sgc-layout .sgc-sidebar::before { content: none !important; }
+.sgc-layout .sgc-sidebar-footer { background: transparent !important; }
+.sgc-layout .sgc-sidebar .sgc-menu-item.activo {
+  background: linear-gradient(105deg, #df0736 0%, #c01240 100%) !important;
+  color: #fff;
+}
+
+/* 3. Mismo banner UAGRM para Plantel y Correspondencia. El recurso es LOCAL.
+   El título y los datos siguen siendo texto HTML, no parte de la imagen. */
+.sgc-layout .sgc-correspondencia {
+  position: relative;
+  isolation: isolate;
+  padding-top: 90px;
+  background: transparent !important;
+  color: var(--sgc-texto, #1a2a42);
+}
+.sgc-layout .sgc-correspondencia::before {
+  content: '';
+  display: block;
+  position: absolute;
+  z-index: -1;
+  top: -30px;
+  left: -30px;
+  right: -30px;
+  height: 210px;
+  border: 0;
+  border-radius: 0;
+  pointer-events: none;
+  background-image: url('../assets/banner-uagrm-referencia.png') !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+.sgc-layout .sgc-correspondencia::after { display: none !important; }
+.sgc-layout .sgc-correspondencia .sgc-migas { top: 28px; left: 0; }
+.sgc-layout .sgc-correspondencia .sgc-pagina-encabezado { margin-bottom: 18px; }
+.sgc-layout .sgc-correspondencia .sgc-pagina-encabezado h2 {
+  color: var(--sgc-texto, #1a2a42);
+  text-shadow: none;
+}
+.sgc-layout .sgc-correspondencia .sgc-pagina-encabezado p {
+  color: var(--sgc-texto-suave, #53617a);
+  opacity: 1;
+}
+.sgc-layout .sgc-correspondencia .sgc-migas,
+.sgc-layout .sgc-correspondencia .sgc-migas span,
+.sgc-layout .sgc-correspondencia .sgc-migas strong {
+  color: var(--sgc-texto, #1a2a42);
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia::before {
+  filter: brightness(.62) saturate(.88);
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-pagina-encabezado h2,
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-migas,
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-migas span,
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-migas strong {
+  color: #f4f7ff;
+  text-shadow: 0 1px 3px rgba(2,10,28,.32);
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-pagina-encabezado p { color: #cad7ed; }
+
+/* 4. Correspondencia: tarjetas, filtros y tabla. Mantener semántica cromática
+   de estados (registrada=verde, en revisión=amarillo, etc.). */
+.sgc-layout .sgc-correspondencia .sgc-aviso {
+  background: var(--sgc-superficie-suave, #eef3fe);
+  color: var(--sgc-texto);
+  border-color: var(--sgc-borde);
+}
+.sgc-layout .sgc-correspondencia .sgc-aviso :is(strong, p) { color: var(--sgc-texto); }
+.sgc-layout .sgc-correspondencia .sgc-filtros :is(input, select) {
+  background-color: var(--sgc-superficie);
+  color: var(--sgc-texto);
+  border-color: var(--sgc-borde);
+}
+.sgc-layout .sgc-correspondencia .sgc-tabla-contenedor {
+  background: var(--sgc-superficie);
+  border-color: var(--sgc-borde);
+}
+.sgc-layout .sgc-correspondencia .sgc-tabla { color: var(--sgc-texto); }
+.sgc-layout .sgc-correspondencia .sgc-tabla th {
+  background: var(--sgc-superficie-suave);
+  color: var(--sgc-texto);
+  border-color: var(--sgc-borde);
+}
+.sgc-layout .sgc-correspondencia .sgc-tabla td { color: var(--sgc-texto); border-color: var(--sgc-borde); }
+.sgc-layout .sgc-correspondencia .sgc-tabla tbody tr:hover { background: var(--sgc-superficie-suave); }
+.sgc-layout .sgc-correspondencia .sgc-tabla td:last-child button:last-of-type {
+  background: var(--sgc-superficie);
+  color: var(--sgc-texto);
+  border-color: var(--sgc-borde);
+}
+.sgc-layout .sgc-correspondencia :is(input, textarea)::placeholder { color: var(--sgc-texto-suave); opacity:1; }
+
+/* 5. Plantel Docente: paneles y formularios. Esto usa el mismo tema <html>.
+   Varios formularios del código original llevan background:#fff en un estilo inline;
+   allí el !important es imprescindible para el modo oscuro. */
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-pestanas {
+  background: #12213c !important;
+  color: #eef3ff;
+  border-color: #334969;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-pestana { color: #d7e4fb; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-pestana:hover:not(.seleccionada) { background: #253a59; border-color: #405676; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-pestana.seleccionada { background: #274773; color: #fff; border-color: #5975a4; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-contador { background: #304768; color:#fff; }
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-plantel-vista, .control-asistencia, .docente-clase, .docente-form, .docente-registro) {
+  background: var(--sgc-superficie) !important;
+  border-color: var(--sgc-borde) !important;
+  color: var(--sgc-texto) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-pagina :is(.sgc-plantel-chip, .control-resumen > div, .control-solicitud, .control-revisadas p, .docente-regla, .docente-vacio) {
+  background: var(--sgc-superficie-suave) !important;
+  border-color: var(--sgc-borde) !important;
+  color: var(--sgc-texto) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-plantel-vista, .control-asistencia, .docente-form, .docente-clase) :is(h2,h3,h4,h5,label,strong) {
+  color: var(--sgc-texto) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-plantel-vista, .control-asistencia, .docente-form, .docente-clase) p,
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-vista-cabecera p {
+  color: var(--sgc-texto-suave) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-plantel-vista form {
+  background: var(--sgc-superficie) !important;
+  color: var(--sgc-texto) !important;
+  border-color: var(--sgc-borde) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-plantel-vista, .control-asistencia, .docente-form, .sgc-filtros) :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  background-color: #0e1b34 !important;
+  color: #f0f5ff !important;
+  border-color: #486080 !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-plantel-vista, .control-asistencia, .docente-form) button:not(.sgc-btn-principal):not(.sgc-plantel-pestana):not(.docente-boton) {
+  background: #1d3151 !important;
+  color: #eef4ff !important;
+  border-color: #476086 !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-tabla th { background: #213552 !important; color:#f5f7ff !important; border-color:#395070; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-tabla td { background:#14243f !important; color:#f0f5ff !important; border-color:#30445f !important; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-tabla tbody tr:hover td { background:#1b3050 !important; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-aviso[role='alert'] { background:#442338; border-color:#a13e5a; }
+:root[data-sgc-tema='oscuro'] .sgc-layout .sgc-correspondencia .sgc-aviso[role='alert'] :is(strong,p) { color:#ffe3e8; }
+
+/* Plantel comparte clases de Correspondencia por compatibilidad. Separar sus
+   botones y tablas para evitar iconos/anchos pensados para documentos. */
+.sgc-layout .sgc-plantel-pagina .sgc-tabla { min-width: 610px; }
+.sgc-layout .sgc-plantel-pagina .sgc-tabla :is(th,td):nth-child(2),
+.sgc-layout .sgc-plantel-pagina .sgc-tabla :is(th,td):nth-child(8) { min-width: 0; }
+.sgc-layout .sgc-plantel-pagina .sgc-tabla td:last-child button {
+  background: var(--sgc-superficie) !important;
+  color: var(--sgc-texto) !important;
+  border: 1px solid var(--sgc-borde) !important;
+}
+.sgc-layout .sgc-plantel-pagina .sgc-tabla td:last-child button::before { content: none !important; }
+.sgc-layout .sgc-plantel-pagina .sgc-aviso::before { content: none !important; }
+.sgc-layout .sgc-plantel-pagina .sgc-aviso { padding: 16px 20px; }
+
+/* 6. Panel docente / asistencia y dashboard (sin afectar el login). */
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.docente-panel, .docente-panel h2, .docente-panel h3, .docente-clase strong, .docente-registro strong) { color: var(--sgc-texto); }
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.docente-panel p, .docente-panel small) { color:var(--sgc-texto-suave); }
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.docente-regla,.docente-vacio,.control-resumen > div,.control-solicitud,.docente-form,.docente-visor-contenido) {
+  background:var(--sgc-superficie) !important; color:var(--sgc-texto) !important; border-color:var(--sgc-borde) !important;
+}
+:root[data-sgc-tema='oscuro'] .sgc-layout :is(.sgc-indicador,.sgc-modulo-destacado,.sgc-aviso) {
+  background:var(--sgc-superficie) !important; color:var(--sgc-texto) !important; border-color:var(--sgc-borde) !important;
+}
+
+@media (max-width: 700px) {
+  .sgc-layout .sgc-sidebar {
+    position: fixed !important;
+    height: 67px !important;
+    min-height: 67px !important;
+    overflow: hidden;
+  }
+  .sgc-layout .sgc-correspondencia { padding-top: 84px; }
+  .sgc-layout .sgc-correspondencia::before {
+    top: -18px; left:-18px; right:-18px; height:168px;
+    background-size: cover !important;
+    background-position: 74% center !important;
+  }
+  .sgc-layout .sgc-correspondencia .sgc-migas { top: 12px; }
+}

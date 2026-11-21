@@ -1,0 +1,26 @@
+/* Bloque 12. Selectores del modal de Asignaciones (claro y oscuro).
+   No altera otros formularios, pantallas ni el modo global. */
+.sgc-asignaciones-modal .sgc-docente-modal-campo select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 10px 34px 10px 12px;
+  border: 1px solid var(--sgc-borde, #c8d4e4);
+  border-radius: 10px;
+  background-color: var(--sgc-superficie, #fff);
+  color: var(--sgc-texto, #162b4c);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color-scheme: light;
+}
+:root[data-sgc-tema='oscuro'] .sgc-asignaciones-modal .sgc-docente-modal-campo select {
+  color-scheme: dark;
+}
+.sgc-asignaciones-modal .sgc-docente-modal-campo select:focus-visible {
+  border-color: #387cdb;
+  outline: 2px solid rgba(56,124,219,.25);
+  outline-offset: 2px;
+}
+.sgc-asignaciones-modal .sgc-docente-modal-nota { margin-top: 18px; }

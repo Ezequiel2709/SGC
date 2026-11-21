@@ -5,6 +5,7 @@ import {
   type EstadoReporte, type FiltrosReporte, type ReporteAsistencia,
 } from '../lib/reportesAsistencia';
 import '../styles/reportes-asistencia.css';
+import { BarChart3, FileSpreadsheet, FileText, Printer, Search, CalendarDays } from 'lucide-react';
 
 type Props = { token: string; docentes: Docente[]; materias: Materia[] };
 const etiquetas: Record<EstadoReporte,string> = {
@@ -57,8 +58,8 @@ export default function ReportesAsistencia({ token, docentes, materias }: Props)
 
   return <section id="sgc-reportes-asistencia" className="sgc-reporte-asistencias" aria-label="Reportes de asistencia">
     <header className="sgc-reporte-cabecera">
-      <div><h3>Reportes de asistencia docente</h3>
-        <p>Consulta por docente, materia, gestión y fechas. Los registros se obtienen de PostgreSQL.</p></div>
+      <div className="sgc-reporte-titulo-con-icono"><BarChart3 size={24} aria-hidden="true"/><div><h3>Reportes de asistencia docente</h3>
+        <p>Consulta por docente, materia, gestión y fechas. Los registros se obtienen de PostgreSQL.</p></div></div>
     </header>
     <form className="sgc-reporte-filtros" onSubmit={e => void generar(e)}>
       <label>Desde
@@ -82,7 +83,7 @@ export default function ReportesAsistencia({ token, docentes, materias }: Props)
             .map(g => <option key={g} value={g}>{g}</option>)}
         </select></label>
       <button type="submit" className="docente-boton" disabled={ocupado}>
-        {ocupado ? 'Generando…' : 'Generar reporte'}
+        <Search size={16} aria-hidden="true" /> {ocupado ? 'Generando…' : 'Generar reporte'}
       </button>
     </form>
     {error && <p className="docente-alerta error" role="alert">{error}</p>}
@@ -116,15 +117,15 @@ export default function ReportesAsistencia({ token, docentes, materias }: Props)
       <p className="sgc-reporte-aviso">{reporte.advertencia}</p>
       <div className="sgc-reporte-acciones">
         <button type="button" className="docente-boton" disabled={descargando || filtrosCambiados}
-          onClick={() => void exportarArchivo('excel')}>{descargando ? 'Exportando…' : 'Descargar Excel (.xlsx)'}</button>
+          onClick={() => void exportarArchivo('excel')}><FileSpreadsheet size={16} aria-hidden="true" /> {descargando ? 'Exportando…' : 'Descargar Excel (.xlsx)'}</button>
         <button type="button" className="docente-boton secundario" disabled={descargando || filtrosCambiados}
-          onClick={() => void exportarArchivo('csv')}>Descargar CSV</button>
+          onClick={() => void exportarArchivo('csv')}><FileText size={16} aria-hidden="true"/> Descargar CSV</button>
         <button type="button" className="docente-boton secundario" disabled={!puedeImprimir}
-          onClick={() => window.print()}>Imprimir / Guardar PDF</button>
+          onClick={() => window.print()}><Printer size={16} aria-hidden="true"/> Imprimir / Guardar PDF</button>
       </div>
       {reporte.filas.length > MAXIMO_IMPRESION &&
         <p className="sgc-reporte-aviso">El PDF está limitado a {MAXIMO_IMPRESION} filas para evitar documentos demasiado grandes. Reduce el periodo o usa Excel o CSV, que exportan todo el reporte.</p>}
-      <h4>Detalle de clases ({reporte.filas.length} registros)</h4>
+      <h4 className="sgc-reporte-subtitulo"><CalendarDays size={18} aria-hidden="true" /> Detalle de clases ({reporte.filas.length} registros)</h4>
       <div className="sgc-reporte-tabla-pantalla">
         <div className="sgc-reporte-scroll"><table className="sgc-tabla sgc-reporte-tabla">
           <thead><tr><th>Fecha</th><th>Docente</th><th>Materia</th><th>Horario</th><th>Estado</th><th>Solicitud</th></tr></thead>

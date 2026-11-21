@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import '../styles/correspondencia-redisenio.css';
 import { obtenerCorrespondencia } from '../lib/backend';
 import FormularioCorrespondencia from '../components/FormularioCorrespondencia';
 import CambiarEstadoCorrespondencia from '../components/CambiarEstadoCorrespondencia';
@@ -240,6 +241,11 @@ export default function Correspondencia({
 
   return (
     <section className="sgc-correspondencia">
+      <nav className="sgc-migas" aria-label="Ruta de navegaciÃ³n">
+        <span>âŒ‚ Inicio</span>
+        <span className="sgc-migas-separador">â€º</span>
+        <strong>Correspondencia</strong>
+      </nav>
       <div className="sgc-pagina-encabezado">
         <h2>Gestión de Correspondencia</h2>
 
@@ -393,9 +399,9 @@ export default function Correspondencia({
                       <td>{documento.referencia}</td>
 
                       <td>
-                        {documento.tipo === 'recibida'
-                          ? 'Recibido'
-                          : 'Expedido'}
+                        <span className={`sgc-tipo sgc-tipo--${documento.tipo}`}>
+                          {documento.tipo === 'recibida' ? 'Recibido' : 'Expedido'}
+                        </span>
                       </td>
 
                       <td>{documento.remitente}</td>
@@ -404,7 +410,7 @@ export default function Correspondencia({
                       <td>{documento.gestion ?? '—'}</td>
 
                       <td>
-                        <span className="sgc-estado">
+                        <span className="sgc-estado" data-estado={documento.estado}>
                           {documento.estado.replaceAll(
                             '_',
                             ' '
