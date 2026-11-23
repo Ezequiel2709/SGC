@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Correspondencia from './pages/Correspondencia';
 import PlantelDocente from './pages/PlantelDocente';
 import MiAsistencia from './pages/MiAsistencia';
+import Auxiliaturas from './pages/Auxiliaturas';
 import './styles/dashboard.css';
 import './styles/dashboard-redisenio.css';
 import LoginSGC from './components/LoginSGC';
@@ -70,6 +71,9 @@ function App() {
             )}
             {moduloActivo === 'asistencia' && token && usuario.rol === 'docente' && (
               <MiAsistencia token={token} nombreDocente={usuario.nombre_completo} cerrarSesion={cerrarSesion} />
+            )}
+            {moduloActivo === 'auxiliaturas' && token && usuario.rol === 'directora' && (
+              <Auxiliaturas token={token} />
             )}
           </main>
         </div>

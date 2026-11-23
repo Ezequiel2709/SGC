@@ -8,6 +8,8 @@ import plantelRouter from './routes/plantel.js';
 import asistenciaDocenteRouter from './routes/asistencia-docente.js';
 import { controlAsistenciaRouter, solicitudesDocenteRouter } from './routes/control-asistencia.js';
 import reportesAsistenciaRouter from './routes/reportes-asistencia.js';
+import auxiliaturasRouter from './routes/auxiliaturas.js';
+import procesosAuxRouter from './routes/auxiliaturas-procesos.js';
 import { autenticar } from './middlewares/auth.js';
 import { permitirRoles } from './middlewares/roles.js';
 
@@ -70,6 +72,11 @@ app.use('/api/correspondencia', autenticar,
 
 // Administración del plantel: solo Directora.
 app.use('/api/plantel', autenticar, permitirRoles('directora'), plantelRouter);
+
+// Convocatorias de auxiliatura: acceso exclusivo de Directora.
+app.use('/api/auxiliaturas', autenticar, permitirRoles('directora'), auxiliaturasRouter);
+// Etapas 2-5: todas protegidas solo para Dirección.
+app.use('/api/auxiliaturas', autenticar, permitirRoles('directora'), procesosAuxRouter);
 
 // Portal de asistencia: solamente la cuenta del docente puede marcar sus clases.
 app.use('/api/docente', autenticar, permitirRoles('docente'), asistenciaDocenteRouter);

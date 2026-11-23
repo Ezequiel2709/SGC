@@ -40,7 +40,7 @@ export default function Sidebar({ moduloActivo, cambiarModulo, rol }: SidebarPro
       disponible: rol === 'directora' || rol === 'docente',
     },
     { id: 'titulaciones', nombre: 'Titulaciones', icono: GraduationCap, disponible: false },
-    { id: 'auxiliaturas', nombre: 'Auxiliaturas', icono: UsersRound, disponible: false },
+    { id: 'auxiliaturas', nombre: 'Auxiliaturas', icono: UsersRound, disponible: rol === 'directora' },
   ];
 
   const opcionesDelRol = opciones.filter((opcion) => {
