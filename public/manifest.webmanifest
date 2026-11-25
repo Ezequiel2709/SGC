@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "SGC - Portal Docente",
+  "short_name": "SGC",
+  "description": "Portal Docente del Sistema de Gestión de Carrera - FINI",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#051633",
+  "theme_color": "#071e43",
+  "icons": [
+    {
+      "src": "/icons/sgc-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/sgc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/sgc-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

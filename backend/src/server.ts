@@ -10,6 +10,7 @@ import { controlAsistenciaRouter, solicitudesDocenteRouter } from './routes/cont
 import reportesAsistenciaRouter from './routes/reportes-asistencia.js';
 import auxiliaturasRouter from './routes/auxiliaturas.js';
 import procesosAuxRouter from './routes/auxiliaturas-procesos.js';
+import titulacionesRouter from './routes/titulaciones.js';
 import { autenticar } from './middlewares/auth.js';
 import { permitirRoles } from './middlewares/roles.js';
 
@@ -77,6 +78,9 @@ app.use('/api/plantel', autenticar, permitirRoles('directora'), plantelRouter);
 app.use('/api/auxiliaturas', autenticar, permitirRoles('directora'), auxiliaturasRouter);
 // Etapas 2-5: todas protegidas solo para Dirección.
 app.use('/api/auxiliaturas', autenticar, permitirRoles('directora'), procesosAuxRouter);
+
+// Titulaciones: solamente Direccion de Carrera.
+app.use('/api/titulaciones', autenticar, permitirRoles('directora'), titulacionesRouter);
 
 // Portal de asistencia: solamente la cuenta del docente puede marcar sus clases.
 app.use('/api/docente', autenticar, permitirRoles('docente'), asistenciaDocenteRouter);

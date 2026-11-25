@@ -1,0 +1,169 @@
+/* BLOQUE 6 - Tema global oscuro del SGC.
+   El modo claro conserva los estilos actuales y el banner de UAGRM.
+   El modo oscuro solo se aplica cuando el boton anuncia "Modo claro".
+   Correspondencia conserva el sincronizador especializado del Bloque 5. */
+
+body:has(.sgc-layout[data-sgc-tema-global='oscuro']) {
+  background-color: #0a1428 !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro'] {
+  color: #eef4ff !important;
+  background: #0a1428 !important;
+  color-scheme: dark;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-contenido-principal,
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-contenido {
+  background: #0c1830 !important;
+  color: #edf3ff !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-header {
+  background: #12213c !important;
+  color: #f1f5ff !important;
+  border-color: #293c5c !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-header :is(h1, h2, strong) {
+  color: #f4f7ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-header :is(p, small, .sgc-usuario-info span) {
+  color: #b6c5e2 !important;
+}
+
+/* Titulos y textos de paneles, sin tapar la fotografia ni las etiquetas de color. */
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(
+  .sgc-pagina-encabezado,
+  .sgc-bienvenida,
+  .sgc-plantel-vista-cabecera,
+  .docente-cabecera,
+  .control-cabecera
+) :is(h1, h2, h3, h4, strong) {
+  color: #f2f6ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(
+  .sgc-pagina-encabezado,
+  .sgc-bienvenida,
+  .sgc-plantel-vista-cabecera,
+  .docente-cabecera,
+  .control-cabecera
+) p {
+  color: #bac9e4 !important;
+}
+
+/* Plantel Docente y Asistencia: pestañas y contenido. */
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-pestanas {
+  background: #12213c !important;
+  border-color: #304463 !important;
+  box-shadow: 0 4px 18px #040c1b33 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-pestana {
+  color: #d8e4fc !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-pestana:hover:not(.seleccionada) {
+  background: #253a59 !important;
+  border-color: #405676 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-pestana.seleccionada {
+  background: #274773 !important;
+  border-color: #5975a4 !important;
+  color: #ffffff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-contador {
+  background: #2d4262;
+  color: #e9f1ff;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-vista,
+.sgc-layout[data-sgc-tema-global='oscuro'] .control-asistencia,
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-clase,
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-form,
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-registro {
+  background: #14233f !important;
+  border-color: #354968 !important;
+  color: #ecf2ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(.sgc-plantel-vista, .control-asistencia, .docente-form, .docente-clase) :is(h2, h3, h4, h5, label, strong) {
+  color: #f1f6ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(.sgc-plantel-vista, .control-asistencia, .docente-form, .docente-clase) p {
+  color: #b9c8e2 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-chip,
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-vacio,
+.sgc-layout[data-sgc-tema-global='oscuro'] .control-resumen > div,
+.sgc-layout[data-sgc-tema-global='oscuro'] .control-solicitud,
+.sgc-layout[data-sgc-tema-global='oscuro'] .control-revisadas p,
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-regla {
+  background: #1b3051 !important;
+  border-color: #3d5576 !important;
+  color: #ecf3ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .control-resumen strong {
+  color: #b4d5ff !important;
+}
+
+/* Tabla de datos del plantel y tablas normales. */
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-tabla-contenedor {
+  background: #14233f !important;
+  border-color: #344768 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-tabla th,
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-vista .sgc-tabla th {
+  background: #223653 !important;
+  color: #f1f6ff !important;
+  border-color: #3c506d !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-tabla td,
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-vista .sgc-tabla td {
+  background: #15243d !important;
+  color: #e3edff !important;
+  border-color: #304360 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-tabla tbody tr:hover td {
+  background: #1d3353 !important;
+}
+
+/* Dashboard / indicadores. */
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(.sgc-indicador, .sgc-modulo-destacado, .sgc-aviso) {
+  background: #162643 !important;
+  color: #eef4ff !important;
+  border-color: #344b6c !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(.sgc-indicador, .sgc-modulo-destacado, .sgc-aviso) :is(h2, h3, strong) {
+  color: #f0f5ff !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(.sgc-indicador, .sgc-modulo-destacado, .sgc-aviso) p {
+  color: #c0cde6 !important;
+}
+
+/* Campos de formulario administrativos (sin alterar el rojo de botones primarios). */
+.sgc-layout[data-sgc-tema-global='oscuro'] :is(
+  .sgc-plantel-vista,
+  .control-asistencia,
+  .docente-form,
+  .sgc-filtros
+) :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  background-color: #0e1b34 !important;
+  color: #f0f5ff !important;
+  border-color: #486080 !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] input::placeholder,
+.sgc-layout[data-sgc-tema-global='oscuro'] textarea::placeholder {
+  color: #9eafce !important;
+}
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-plantel-vista button:not(.sgc-btn-principal):not(.sgc-plantel-pestana):not(.docente-boton),
+.sgc-layout[data-sgc-tema-global='oscuro'] .docente-boton.secundario {
+  background: #1a2c4a !important;
+  color: #e7efff !important;
+  border-color: #4a6485 !important;
+}
+
+/* Preservar el degradado azul-rojo del sidebar en ambos modos. */
+.sgc-layout[data-sgc-tema-global='oscuro'] .sgc-sidebar {
+  background-color: #bb0036 !important;
+  background-image: linear-gradient(180deg, #082e6d 0%, #13285a 34%, #302451 56%, #79173e 78%, #ce0034 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Correspondencia ya dispone de reglas especificas del Bloque 5 para sus tarjetas,
+   botones y etiquetas; no se modifican ni se borran. */

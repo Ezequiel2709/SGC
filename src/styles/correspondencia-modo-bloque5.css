@@ -1,0 +1,179 @@
+/*
+ SGC - BLOQUE 5: tema claro / oscuro real para Correspondencia.
+ Se carga DESPUES de correspondencia-redisenio.css (que contiene Bloques 3 y 4).
+ CSS aislado con :has(.sgc-correspondencia): sin cambios en backend o modulos ajenos.
+*/
+
+/* MENU LATERAL: degradado visible en la primera pantalla, EN AMBOS TEMAS.
+   Stops en pixeles: si la tabla es larga el rojo NO desaparece abajo de todo. */
+.sgc-layout:has(.sgc-correspondencia) .sgc-sidebar {
+  position: relative !important;
+  isolation: isolate;
+  background-color: #bd0036 !important;
+  background-image: linear-gradient(180deg,
+    #062a67 0px, #08265c 220px, #232354 430px,
+    #681743 610px, #b90036 785px, #d50031 970px) !important;
+  color: #ffffff !important;
+}
+/* Ensure the front-most decorative overlay cannot hide the red gradient. */
+.sgc-layout:has(.sgc-correspondencia) .sgc-sidebar::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
+  background-image: radial-gradient(ellipse 88% 37% at 106% 94%,
+    rgba(243, 8, 56, .58) 0%, rgba(241, 15, 63, .16) 54%, transparent 100%) !important;
+  background-color: transparent !important;
+}
+.sgc-layout:has(.sgc-correspondencia) .sgc-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+.sgc-layout:has(.sgc-correspondencia) .sgc-sidebar .sgc-sidebar-footer {
+  background: transparent !important;
+}
+.sgc-layout:has(.sgc-correspondencia) .sgc-menu-item.activo {
+  color: #fff !important;
+  background: linear-gradient(100deg, #e10735 0%, #c01847 100%) !important;
+}
+
+/* TEMA CLARO: conserva el banner y paleta de la imagen de referencia. */
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia),
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-contenido-principal,
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-contenido {
+  color: #091c45 !important;
+  background: #fbfcff !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-contenido {
+  background-image: linear-gradient(180deg,#f6f9ff,#fff 46%) !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-header {
+  background: #fff !important;
+  color: #081a43 !important;
+  border-color: #e5eaf4 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-header h1,
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-header strong {
+  color: #081a43 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-header p,
+.sgc-layout[data-sgc-correspondencia-tema='claro']:has(.sgc-correspondencia) .sgc-usuario-info span {
+  color: #41506f !important;
+}
+
+/* TEMA OSCURO: necesario para revertir los !important claros del Bloque 4. */
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia),
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-contenido-principal,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-contenido {
+  background: #08142c !important;
+  color: #eaf1ff !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-contenido {
+  background-image: linear-gradient(180deg, #0e1d3d 0%, #08142c 35%) !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header {
+  background: #142440 !important;
+  color: #f3f6ff !important;
+  border-color: #2b3e60 !important;
+  box-shadow: none !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header h1,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header strong {
+  color: #f2f6ff !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header p,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-usuario-info span {
+  color: #c7d5ef !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header button {
+  color: #f2f6ff !important;
+  background: #1d3151 !important;
+  border-color: #3a5377 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-header button:hover {
+  background: #263d62 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia {
+  background: transparent !important;
+  color: #edf3ff !important;
+}
+/* The campus image remains visible but is softened in dark mode. */
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia::before {
+  filter: brightness(.62) saturate(.85) !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-migas,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-migas span,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-migas strong {
+  color: #f4f7ff !important;
+  text-shadow: 0 1px 3px #07152d;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-pagina-encabezado h2 {
+  color: #f3f6ff !important;
+  text-shadow: none !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-pagina-encabezado p {
+  color: #c9d4eb !important;
+  opacity: 1 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-aviso {
+  color: #eaf2ff !important;
+  background: linear-gradient(110deg,#1a2d50,#20365d) !important;
+  border-color: #36527d !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-aviso strong,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-aviso p {
+  color: #e9f1ff !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-aviso[role='alert'] {
+  background: #442338 !important;
+  border-color: #a13e5a !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-filtros input,
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-filtros select {
+  background-color: #1c2b49 !important;
+  color: #f4f7ff !important;
+  border-color: #405677 !important;
+  color-scheme: dark;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-filtros input::placeholder {
+  color: #b7c6df !important;
+  opacity: 1;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla-contenedor {
+  background: #15243e !important;
+  border-color: #31435e !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.25) !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla {
+  color: #ebf2ff !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla th {
+  background: #203250 !important;
+  color: #edf4ff !important;
+  border-color: #344763 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla td {
+  color: #edf4ff !important;
+  background: #15243e !important;
+  border-color: #30435f !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla tbody tr:hover td {
+  background: #1c3153 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-tabla td:last-child button:last-of-type {
+  color: #edf4ff !important;
+  background: #1c2c4a !important;
+  border-color: #577198 !important;
+}
+.sgc-layout[data-sgc-correspondencia-tema='oscuro']:has(.sgc-correspondencia) .sgc-correspondencia .sgc-estado:not([data-estado='registrada']):not([data-estado='respondida']):not([data-estado='en_revision']):not([data-estado='pendiente']):not([data-estado='cerrada']):not([data-estado='anulada']) {
+  background: #354762 !important;
+  color: #f6f8ff !important;
+}
+
+/* Display tweak on phones: show a touch of red in the sidebar too. */
+@media (max-width: 700px) {
+  .sgc-layout:has(.sgc-correspondencia) .sgc-sidebar {
+    background-image: linear-gradient(135deg,#072e6f 0%,#24265b 40%,#8f123e 75%,#cf002f 100%) !important;
+  }
+}

@@ -39,7 +39,7 @@ export default function Sidebar({ moduloActivo, cambiarModulo, rol }: SidebarPro
       icono: rol === 'docente' ? ClipboardCheck : BookOpenCheck,
       disponible: rol === 'directora' || rol === 'docente',
     },
-    { id: 'titulaciones', nombre: 'Titulaciones', icono: GraduationCap, disponible: false },
+    { id: 'titulaciones', nombre: 'Titulaciones', icono: GraduationCap, disponible: rol === 'directora' },
     { id: 'auxiliaturas', nombre: 'Auxiliaturas', icono: UsersRound, disponible: rol === 'directora' },
   ];
 

@@ -1,0 +1,99 @@
+/*
+ * SGC - BLOQUE 7: tema oscuro coherente entre Plantel Docente y Correspondencia.
+ * SOLO aspecto visual. No altera el modo claro ni la logica de los modulos.
+ *
+ * Por compatibilidad, PlantelDocente.tsx usa AMBAS clases:
+ *   sgc-correspondencia sgc-plantel-pagina
+ * Esto hace que los estilos claros de Correspondencia (Bloque 4) afecten Plantel.
+ * Estas reglas solo corrigen Plantel cuando el tema GLOBAL activo es oscuro.
+ */
+
+/* 1) Fondo general y HEADER: deben ser oscuros, como en Correspondencia. */
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina),
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-contenido-principal,
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-contenido {
+  background-color: #0c1830 !important;
+  color: #edf3ff !important;
+  color-scheme: dark;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-header {
+  background: #142440 !important;
+  color: #f3f6ff !important;
+  border-color: #2b3e60 !important;
+  box-shadow: none !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-header :is(h1, h2, strong) {
+  color: #f3f6ff !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-header :is(p, small, .sgc-usuario-info span) {
+  color: #c9d4eb !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-header button {
+  background-color: #1d3151 !important;
+  color: #f2f6ff !important;
+  border-color: #3a5377 !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-header button:hover {
+  background-color: #263d62 !important;
+}
+
+/* 2) BANNER UAGRM: misma fotografía, sombreada para el modo oscuro.
+ * Oscurecer el pseudo-elemento conserva títulos y botones nítidos. */
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-pagina {
+  background: transparent !important;
+  color: #edf3ff !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-pagina::before {
+  filter: brightness(.62) saturate(.85) !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-pagina .sgc-pagina-encabezado {
+  background: transparent !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-pagina .sgc-pagina-encabezado h2 {
+  color: #f4f7ff !important;
+  text-shadow: 0 1px 3px rgba(5, 13, 30, .28) !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-pagina .sgc-pagina-encabezado p {
+  color: #d7e1f4 !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 2px rgba(5, 13, 30, .22) !important;
+}
+
+/* 3) Los formularios de Plantel usan estilos React en línea con fondo blanco;
+ * al abrirlos, conservar contraste en el modo oscuro. */
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-vista form {
+  background: #14233f !important;
+  color: #edf3ff !important;
+  border-color: #354968 !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-vista form :is(h2, h3, h4, label, strong, small) {
+  color: #edf3ff !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-vista :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  background-color: #0e1b34 !important;
+  color: #f0f5ff !important;
+  border-color: #486080 !important;
+}
+
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-vista :is(input, textarea)::placeholder {
+  color: #a9b9d5 !important;
+}
+
+/* 4) Mantener estilos de los avisos existentes sin modificar sus mensajes. */
+.sgc-layout[data-sgc-tema-global='oscuro']:has(.sgc-plantel-pagina) .sgc-plantel-estado {
+  color: #eef4ff !important;
+}
+
+/* Sin reglas para tema claro: el fondo blanco original continúa intacto.
+ * No se toca la barra lateral ni el banner de Correspondencia. */

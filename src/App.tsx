@@ -7,6 +7,7 @@ import Correspondencia from './pages/Correspondencia';
 import PlantelDocente from './pages/PlantelDocente';
 import MiAsistencia from './pages/MiAsistencia';
 import Auxiliaturas from './pages/Auxiliaturas';
+import Titulaciones from './pages/Titulaciones';
 import './styles/dashboard.css';
 import './styles/dashboard-redisenio.css';
 import LoginSGC from './components/LoginSGC';
@@ -74,6 +75,9 @@ function App() {
             )}
             {moduloActivo === 'auxiliaturas' && token && usuario.rol === 'directora' && (
               <Auxiliaturas token={token} />
+            )}
+            {moduloActivo === 'titulaciones' && token && usuario.rol === 'directora' && (
+              <Titulaciones token={token} />
             )}
           </main>
         </div>
